@@ -16,6 +16,7 @@ struct PracticeView: View {
 
     @State private var showConfetti: Bool = false
     @State private var pulse: Bool = false
+    @State private var impactGenerator = UIImpactFeedbackGenerator(style: .medium)
 
     var body: some View {
         GeometryReader { geo in
@@ -82,6 +83,9 @@ struct PracticeView: View {
             }
             .navigationTitle("\(store.format.title) Time")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                impactGenerator.prepare()
+            }
             .onChange(of: store.timerRunning) { _, newValue in
                 UIApplication.shared.isIdleTimerDisabled = newValue
             }
@@ -98,8 +102,7 @@ extension PracticeView {
     private var playPauseButton: some View {
         Button {
             // Haptic feedback for button press
-            let impact = UIImpactFeedbackGenerator(style: .medium)
-            impact.impactOccurred()
+            impactGenerator.impactOccurred()
             withAnimation {
                 _ = store.send(.togglePlayPause)
             }

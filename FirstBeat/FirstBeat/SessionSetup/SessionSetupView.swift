@@ -13,6 +13,9 @@ struct SessionSetupView: View {
     @Bindable
     var store: StoreOf<SessionSetupFeature>
 
+    @State
+    private var impactGenerator = UIImpactFeedbackGenerator(style: .medium)
+
     var body: some View {
         VStack(spacing: 0) {
 
@@ -31,7 +34,7 @@ struct SessionSetupView: View {
                     }
 
                     DurationSection(
-                        totalDuration: store.totaDuration
+                        totalDuration: store.totalDuration
                     ) {
                         store.send(.durationChanged($0))
                     }
@@ -40,13 +43,15 @@ struct SessionSetupView: View {
             }
 
             StartButton {
-                let impact = UIImpactFeedbackGenerator(style: .medium)
-                impact.impactOccurred()
                 store.send(.startSelected)
+                impactGenerator.impactOccurred()
             }
         }
         .navigationTitle("Set the Show")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            impactGenerator.prepare()
+        }
     }
 }
 

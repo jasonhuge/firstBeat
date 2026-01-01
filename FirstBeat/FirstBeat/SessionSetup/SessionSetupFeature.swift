@@ -13,7 +13,7 @@ struct SessionSetupFeature {
     struct State: Equatable {
         var suggestion: String
         var selectedType: FormatType = .harold
-        var totaDuration: Int = 25
+        var totalDuration: Int = 25
     }
 
     enum Action: Equatable {
@@ -30,13 +30,13 @@ struct SessionSetupFeature {
                 state.selectedType = type
                 return .none
             case .durationChanged(let minutes):
-                state.totaDuration = minutes
+                state.totalDuration = minutes
                 return .none
             case .startSelected:
                 return .send(.next(
                     state.suggestion,
                     state.selectedType,
-                    state.totaDuration
+                    state.totalDuration
                 ))
             case .next:
                 return .none

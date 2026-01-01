@@ -16,6 +16,9 @@ struct SuggestionView: View {
     @FocusState
     private var isTextFieldFocused: Bool
 
+    @State
+    private var impactGenerator = UIImpactFeedbackGenerator(style: .medium)
+
     var body: some View {
         VStack(spacing: 0) {
             makeContent()
@@ -36,6 +39,9 @@ struct SuggestionView: View {
                 }
 
             makeFooter()
+        }
+        .onAppear {
+            impactGenerator.prepare()
         }
     }
 }
@@ -88,7 +94,7 @@ extension SuggestionView {
             }
         }
         .padding()
-        .onChange(of: store.conversations.map(\.content), initial: false) { _, _ in
+        .onChange(of: store.conversations.count, initial: false) { _, _ in
             guard let lastID = store.conversations.last?.id else { return }
             withAnimation(.easeOut(duration: 0.4)) {
                 proxy.scrollTo(lastID, anchor: .bottom)
@@ -130,10 +136,9 @@ extension SuggestionView {
                             )
                         } else {
                             Button {
-                                // Haptic feedback for selection
-                                let generator = UIImpactFeedbackGenerator(style: .medium)
-                                generator.impactOccurred()
+                                // Send action first, then haptic feedback
                                 store.send(.suggestionSelected(suggestion))
+                                impactGenerator.impactOccurred()
                             } label: {
                                 HStack {
                                     Text(suggestion)
@@ -176,10 +181,9 @@ extension SuggestionView {
             .focused($isTextFieldFocused)
 
             Button {
-                let generator = UIImpactFeedbackGenerator(style: .medium)
-                generator.impactOccurred()
                 isTextFieldFocused = false
                 store.send(.sendSuggestionTapped)
+                impactGenerator.impactOccurred()
             } label: {
                 Image(systemName: "arrow.up")
                     .foregroundColor(.white)
@@ -194,6 +198,7 @@ extension SuggestionView {
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(Color(.systemBackground).opacity(0.95))
+        .compositingGroup()
         .shadow(color: .black.opacity(0.08), radius: 8, y: -4)
     }
 }
