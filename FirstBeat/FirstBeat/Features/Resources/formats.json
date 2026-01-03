@@ -1,0 +1,156 @@
+[
+    {
+        "id": "harold",
+        "title": "Harold",
+        "name": "Harold",
+        "description": "A foundational long-form structure built around repeated scene beats, thematic exploration, and ensemble group games. Scenes evolve through heightening and callback, often weaving together by the end.",
+        "preferred_opening_id": "invocation",
+        "allowed_opening_ids": ["invocation", "organic_opening", "living_room", "deconstruction", "pattern_game", "slideshow"],
+        "segments": [
+            {
+                "title": "Opening",
+                "portion": 0.08
+            },
+            {
+                "title": "Beat 1",
+                "portion": 0.24
+            },
+            {
+                "title": "Group Game 1",
+                "portion": 0.08
+            },
+            {
+                "title": "Beat 2",
+                "portion": 0.24
+            },
+            {
+                "title": "Group Game 2",
+                "portion": 0.08
+            },
+            {
+                "title": "Beat 3 / Wrap-Up",
+                "portion": 0.28
+            }
+        ]
+    },
+    {
+        "id": "montage",
+        "title": "Montage",
+        "name": "Montage",
+        "description": "A flexible long-form format made up of multiple independent scenes connected by a loose theme, tone, or idea. Emphasizes variety, discovery, and fast transitions.",
+        "preferred_opening_id": "organic_opening",
+        "allowed_opening_ids": ["invocation", "organic_opening", "living_room", "deconstruction", "rant", "conducted_story", "pattern_game", "slideshow", "interview", "news_report", "documentary"],
+        "segments": [
+            {
+                "title": "Opening",
+                "portion": 0.30
+            },
+            {
+                "title": "Heightening",
+                "portion": 0.40
+            },
+            {
+                "title": "Tag Run",
+                "portion": 0.20
+            },
+            {
+                "title": "Wrap-Up",
+                "portion": 0.10
+            }
+        ]
+    },
+    {
+        "id": "pretty_flower",
+        "title": "Pretty Flower",
+        "name": "Pretty Flower",
+        "description": "A pattern-based long-form format that alternates between grounded two-person scenes and recurring group games. The repetition of structure allows for clear heightening and playful experimentation.",
+        "preferred_opening_id": "pattern_game",
+        "allowed_opening_ids": ["pattern_game", "organic_opening", "invocation", "slideshow", "conducted_story"],
+        "segments": [
+            {
+                "title": "Opening Group Game",
+                "portion": 0.15
+            },
+            {
+                "title": "Scene Pair 1",
+                "portion": 0.20
+            },
+            {
+                "title": "Group Game Repeat",
+                "portion": 0.15
+            },
+            {
+                "title": "Scene Pair 2",
+                "portion": 0.20
+            },
+            {
+                "title": "Group Game Heightening",
+                "portion": 0.15
+            },
+            {
+                "title": "Final Scenes / Button",
+                "portion": 0.15
+            }
+        ]
+    },
+    {
+        "id": "the_hulk",
+        "title": "The Hulk",
+        "name": "The Hulk",
+        "description": "A character-driven long-form format that begins with a grounded, realistic scene and repeatedly returns to it as emotional intensity and absurdity escalate. Each return amplifies what was previously restrained.",
+        "preferred_opening_id": "living_room",
+        "allowed_opening_ids": ["living_room", "rant", "interview", "monologue", "deconstruction"],
+        "segments": [
+            {
+                "title": "Base Reality Scene",
+                "portion": 0.25
+            },
+            {
+                "title": "First Heightening",
+                "portion": 0.20
+            },
+            {
+                "title": "Second Heightening",
+                "portion": 0.20
+            },
+            {
+                "title": "Extreme Escalation",
+                "portion": 0.20
+            },
+            {
+                "title": "Blowout / Resolution",
+                "portion": 0.15
+            }
+        ]
+    },
+    {
+        "id": "armando",
+        "title": "Armando",
+        "name": "Armando",
+        "description": "A narrative-driven long-form format inspired by a monologue. Scenes are grounded in personal stories or reflections and explore different perspectives, emotions, or interpretations of the same idea.",
+        "required_opening_id": "monologue",
+        "allowed_opening_ids": ["monologue"],
+        "segments": [
+            {
+                "title": "Monologue",
+                "portion": 0.20
+            },
+            {
+                "title": "Scene Set 1",
+                "portion": 0.25
+            },
+            {
+                "title": "Second Monologue or Commentary",
+                "portion": 0.15
+            },
+            {
+                "title": "Scene Set 2",
+                "portion": 0.25
+            },
+            {
+                "title": "Final Scenes / Button",
+                "portion": 0.15
+            }
+        ]
+    }
+]
