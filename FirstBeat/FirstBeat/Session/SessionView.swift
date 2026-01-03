@@ -11,7 +11,7 @@ import ConfettiSwiftUI
 import AudioToolbox
 import UIKit
 
-struct PracticeView: View {
+struct SessionView: View {
     @Bindable var store: StoreOf<SessionFeature>
 
     @State private var showConfetti: Bool = false
@@ -20,69 +20,69 @@ struct PracticeView: View {
 
     var body: some View {
         GeometryReader { geo in
-            let isLandscape = geo.size.width > geo.size.height
+            let isLandscape = Self.isLandscape(size: geo.size)
 
             ZStack {
                 Color(.systemBackground).ignoresSafeArea()
 
-                if isLandscape {
-                    // Landscape layout: split horizontally
-                    HStack(spacing: 24) {
-                        VStack(spacing: 32) {
+                VStack(spacing: 0) {
+                    Spacer()
+
+                    ZStack {
+                        if !store.showTimerUI {
+                            GeometryReader { scrollGeo in
+                                ScrollView {
+                                    VStack {
+                                        Spacer(minLength: 0)
+                                        SessionSummaryCard(
+                                            suggestion: store.title,
+                                            format: store.format,
+                                            opening: store.opening,
+                                            duration: store.duration
+                                        )
+                                        Spacer(minLength: 0)
+                                    }
+                                    .padding(.horizontal)
+                                    .frame(minHeight: scrollGeo.size.height)
+                                }
+                            }
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .top).combined(with: .opacity),
+                                removal: .move(edge: .top).combined(with: .opacity)
+                            ))
+                            .zIndex(store.showTimerUI ? 0 : 1)
+                        }
+
+                        if store.showTimerUI {
                             timerArea
-                            if store.currentSegmentIndex < store.format.segments.count {
-                                playPauseButton
-                            }
-                        }
-                        .frame(width: geo.size.width * 0.55)
-
-                        ScrollView {
-                            SessionSummaryCard(
-                                suggestion: store.title,
-                                format: store.format,
-                                duration: store.duration
-                            )
-                        }
-                        .frame(width: geo.size.width * 0.4)
-                    }
-                    .padding(.horizontal)
-                } else {
-                    // Portrait layout
-                    VStack(spacing: 32) {
-                        ZStack {
-                            if !store.showTimerUI {
-                                SessionSummaryCard(
-                                    suggestion: store.title,
-                                    format: store.format,
-                                    duration: store.duration
-                                )
                                 .transition(.asymmetric(
-                                    insertion: .move(edge: .top).combined(with: .opacity),
-                                    removal: .move(edge: .top).combined(with: .opacity)
+                                    insertion: .move(edge: .bottom).combined(with: .opacity),
+                                    removal: .move(edge: .bottom).combined(with: .opacity)
                                 ))
-                                .zIndex(store.showTimerUI ? 0 : 1)
-                            }
-
-                            if store.showTimerUI {
-                                timerArea
-                                    .transition(.asymmetric(
-                                        insertion: .move(edge: .bottom).combined(with: .opacity),
-                                        removal: .move(edge: .bottom).combined(with: .opacity)
-                                    ))
-                                    .zIndex(store.showTimerUI ? 1 : 0)
-                            }
-                        }
-
-                        if store.currentSegmentIndex < store.format.segments.count {
-                            playPauseButton
+                                .zIndex(store.showTimerUI ? 1 : 0)
                         }
                     }
-                    .padding(.horizontal)
-                    .padding(.top, 0)
+
+                    Spacer()
+
+                    if !isLandscape && store.currentSegmentIndex < store.format.segments.count {
+                        playPauseButton
+                            .padding(.bottom, Constants.playButtonBottomPadding)
+                    } else if !isLandscape {
+                        Spacer()
+                            .frame(height: Constants.placeholderSpacerHeight)
+                    }
                 }
             }
-            .navigationTitle("\(store.format.title) Time")
+            .navigationTitle(store.title ?? "\(store.format.title) Time")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if isLandscape && store.currentSegmentIndex < store.format.segments.count {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        toolbarPlayPauseButton
+                    }
+                }
+            }
             .onAppear {
                 impactGenerator.prepare()
             }
@@ -96,8 +96,55 @@ struct PracticeView: View {
     }
 }
 
+// MARK: - Layout Calculations
+
+extension SessionView {
+    enum Constants {
+        static let playButtonSize: CGFloat = 80
+        static let playButtonIconSize: CGFloat = 32
+        static let playButtonShadowOpacity: CGFloat = 0.16
+        static let playButtonShadowRadius: CGFloat = 8
+        static let playButtonShadowY: CGFloat = 4
+        static let playButtonScaleRunning: CGFloat = 1.0
+        static let playButtonScalePaused: CGFloat = 1.12
+        static let playButtonAnimationResponse: CGFloat = 0.4
+        static let playButtonAnimationDamping: CGFloat = 0.7
+        static let playButtonBottomPadding: CGFloat = 40
+        static let placeholderSpacerHeight: CGFloat = 80
+
+        static let timerSpacing: CGFloat = 24
+        static let preshowSpacing: CGFloat = 8
+        static let preshowCountdownFontSize: CGFloat = 72
+        static let preshowShadowOpacity: CGFloat = 0.25
+        static let preshowShadowRadius: CGFloat = 8
+        static let preshowAnimationDuration: CGFloat = 0.2
+
+        static let segmentSpacing: CGFloat = 16
+        static let segmentLabelHorizontalPadding: CGFloat = 20
+        static let segmentLabelVerticalPadding: CGFloat = 12
+        static let segmentLabelOpacity: CGFloat = 0.2
+        static let segmentLabelMinimumScaleFactor: CGFloat = 0.5
+        static let timerFontSize: CGFloat = 92
+
+        static let progressBarOpacity: CGFloat = 0.25
+        static let progressBarHeight: CGFloat = 20
+        static let progressBarPulseScale: CGFloat = 1.05
+        static let progressBarAnimationDuration: CGFloat = 0.4
+
+        static let completePaddingVertical: CGFloat = 20
+    }
+
+    static func isLandscape(size: CGSize) -> Bool {
+        size.width > size.height
+    }
+
+    static func playButtonScale(isRunning: Bool) -> CGFloat {
+        isRunning ? Constants.playButtonScaleRunning : Constants.playButtonScalePaused
+    }
+}
+
 // MARK: - Components
-extension PracticeView {
+extension SessionView {
 
     private var playPauseButton: some View {
         Button {
@@ -109,37 +156,55 @@ extension PracticeView {
         } label: {
             ZStack {
                 Circle()
-                    .fill(store.timerRunning ? Color.blue : Color.green)
-                    .frame(width: 80, height: 80)
-                    .shadow(color: .black.opacity(0.16), radius: 8, y: 4)
+                    .fill(Color.green)
+                    .frame(width: Constants.playButtonSize, height: Constants.playButtonSize)
+                    .shadow(color: .black.opacity(Constants.playButtonShadowOpacity),
+                           radius: Constants.playButtonShadowRadius,
+                           y: Constants.playButtonShadowY)
 
                 Image(systemName: store.timerRunning ? "pause.fill" : "play.fill")
-                    .font(.system(size: 32))
+                    .font(.system(size: Constants.playButtonIconSize))
                     .foregroundColor(.white)
             }
-            .scaleEffect(store.timerRunning ? 1.0 : 1.12)
-            .animation(.spring(response: 0.4, dampingFraction: 0.7),
+            .scaleEffect(Self.playButtonScale(isRunning: store.timerRunning))
+            .animation(.spring(response: Constants.playButtonAnimationResponse,
+                             dampingFraction: Constants.playButtonAnimationDamping),
                        value: store.timerRunning)
         }
     }
 
+    private var toolbarPlayPauseButton: some View {
+        Button {
+            // Haptic feedback for button press
+            impactGenerator.impactOccurred()
+            withAnimation {
+                _ = store.send(.togglePlayPause)
+            }
+        } label: {
+            Image(systemName: store.timerRunning ? "pause.circle.fill" : "play.circle.fill")
+                .font(.title2)
+                .foregroundColor(.green)
+        }
+    }
+
     private var timerArea: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: Constants.timerSpacing) {
 
             // Pre-show countdown
             if store.showPreshowCountdown {
-                VStack(spacing: 8) {
+                VStack(spacing: Constants.preshowSpacing) {
                     Text("Get Ready")
                         .font(.title2)
-                        .foregroundColor(.orange)
+                        .foregroundColor(AppTheme.warmUpColor)
                     Text("\(store.preshowCountdown)")
-                        .font(.system(size: 72, weight: .bold, design: .monospaced))
-                        .foregroundColor(.orange)
-                        .shadow(color: .orange.opacity(0.25), radius: 8)
+                        .font(.system(size: Constants.preshowCountdownFontSize, weight: .bold, design: .monospaced))
+                        .foregroundColor(AppTheme.warmUpColor)
+                        .shadow(color: AppTheme.warmUpColor.opacity(Constants.preshowShadowOpacity),
+                               radius: Constants.preshowShadowRadius)
                 }
                 .onChange(of: store.preshowCountdown) { _, _ in
                     playTick()
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    withAnimation(.easeInOut(duration: Constants.preshowAnimationDuration)) {
                         pulse.toggle()
                     }
                 }
@@ -147,32 +212,32 @@ extension PracticeView {
 
             // Current segment timer
             else if store.currentSegmentIndex < store.format.segments.count {
-                VStack(spacing: 16) {
+                VStack(spacing: Constants.segmentSpacing) {
                     Text(store.format.segments[store.currentSegmentIndex].title)
                         .font(.largeTitle)
                         .fontWeight(.semibold)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
-                        .background(Capsule().fill(Color.blue.opacity(0.2)))
-                        .foregroundColor(.blue)
-                        .minimumScaleFactor(0.5)
+                        .padding(.horizontal, Constants.segmentLabelHorizontalPadding)
+                        .padding(.vertical, Constants.segmentLabelVerticalPadding)
+                        .background(Capsule().fill(AppTheme.practiceColor.opacity(Constants.segmentLabelOpacity)))
+                        .foregroundColor(AppTheme.practiceColor)
+                        .minimumScaleFactor(Constants.segmentLabelMinimumScaleFactor)
 
                     Text(timeString(store.elapsedTime))
-                        .font(.system(size: 92, weight: .bold, design: .monospaced))
+                        .font(.system(size: Constants.timerFontSize, weight: .bold, design: .monospaced))
                         .foregroundColor(.primary)
 
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
-                            Capsule().fill(Color.gray.opacity(0.25))
+                            Capsule().fill(Color.gray.opacity(Constants.progressBarOpacity))
                             Capsule()
-                                .fill(Color.blue)
+                                .fill(AppTheme.practiceColor)
                                 .frame(width: geo.size.width * progress())
-                                .scaleEffect(pulse ? 1.05 : 1.0)
-                                .animation(.easeInOut(duration: 0.4).repeatForever(autoreverses: true),
+                                .scaleEffect(pulse ? Constants.progressBarPulseScale : 1.0)
+                                .animation(.easeInOut(duration: Constants.progressBarAnimationDuration).repeatForever(autoreverses: true),
                                            value: pulse)
                         }
                     }
-                    .frame(height: 20)
+                    .frame(height: Constants.progressBarHeight)
                 }
                 .onChange(of: store.currentSegmentIndex) { _, _ in
                     playSegmentChime()
@@ -184,8 +249,8 @@ extension PracticeView {
                 ZStack {
                     Text("\(store.format.name) complete!")
                         .font(.title)
-                        .foregroundColor(.green)
-                        .padding(.vertical, 20)
+                        .foregroundColor(AppTheme.successColor)
+                        .padding(.vertical, Constants.completePaddingVertical)
 
                     ConfettiCannon(trigger: $showConfetti)
                 }
@@ -217,42 +282,65 @@ extension PracticeView {
 
 // MARK: - Practice Summary Card
 struct SessionSummaryCard: View {
-    let suggestion: String
+    let suggestion: String?
     let format: FormatType
+    let opening: Opening
     let duration: Int
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
 
             // Suggestion
-            Text("Suggestion: \(suggestion)")
-                .font(.title3)
-                .fontWeight(.semibold)
-                .multilineTextAlignment(.leading)
+            if let suggestion = suggestion, !suggestion.isEmpty {
+                Text("Suggestion: \(suggestion)")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(Color(.label))
+                    .multilineTextAlignment(.leading)
+            } else {
+                Text("Free Practice")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(Color(.label))
+                    .multilineTextAlignment(.leading)
+            }
 
             // Metadata row
             HStack(spacing: 16) {
                 Label(format.title, systemImage: "theatermasks")
+
+                Divider()
+                    .frame(height: 12)
+                Label(opening.name, systemImage: "star.circle")
+
                 Spacer()
                 Label("\(duration) min", systemImage: "clock")
             }
             .font(.subheadline)
-            .foregroundStyle(.secondary)
+            .foregroundColor(Color(.secondaryLabel))
 
             Divider()
 
             // Format description
             Text(format.description)
                 .font(.body)
+                .foregroundColor(Color(.label))
+
+            // Opening description
+            Text(opening.description)
+                .font(.body)
+                .foregroundColor(Color(.secondaryLabel))
+                .italic()
 
             // Segment breakdown
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(format.segments) { segment in
                     HStack {
                         Text(segment.title)
+                            .foregroundColor(Color(.label))
                         Spacer()
                         Text(segment.stringDuration(duration))
-                            .foregroundStyle(.secondary)
+                            .foregroundColor(Color(.secondaryLabel))
                     }
                     .font(.footnote)
                 }
@@ -261,7 +349,7 @@ struct SessionSummaryCard: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color(.systemBackground))
+                .fill(Color(.secondarySystemBackground))
                 .shadow(color: .black.opacity(0.10), radius: 6, y: 3)
         )
     }
@@ -270,10 +358,11 @@ struct SessionSummaryCard: View {
 
 #Preview {
     NavigationView {
-        PracticeView(store: Store(
+        SessionView(store: Store(
             initialState: SessionFeature.State(
                 title: "A Happy Clam",
-                format: .harold,
+                format: .mock,
+                opening: .mock,
                 duration: 2
             ), reducer: {
                 SessionFeature()

@@ -7,10 +7,23 @@
 
 import Foundation
 
-struct FormatSegment: Equatable, Identifiable {
-    let id = UUID()
+struct FormatSegment: Equatable, Identifiable, Codable {
+    let id: UUID
     let title: String
     let portion: Double   // 0.0 → 1.0
+
+    init(title: String, portion: Double) {
+        self.id = UUID()
+        self.title = title
+        self.portion = portion
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = UUID()
+        self.title = try container.decode(String.self, forKey: .title)
+        self.portion = try container.decode(Double.self, forKey: .portion)
+    }
 
     func duration(from totalDuration: Int) -> Double {
         let totalSeconds = totalDuration * 60
@@ -27,56 +40,38 @@ struct FormatSegment: Equatable, Identifiable {
     }
 }
 
-enum FormatType: Equatable, Identifiable, CaseIterable {
-    case harold
-    case montage
+struct FormatType: Equatable, Identifiable, Codable {
+    let id: String
+    let title: String
+    let name: String
+    let description: String
+    let segments: [FormatSegment]
+    let requiredOpeningId: String?
+    let preferredOpeningId: String?
+    let allowedOpeningIds: [String]?
+}
 
-    var id: String { title }
-
-    var title: String {
-        switch self {
-        case .harold: return "Harold"
-        case .montage: return "Montage"
-        }
-    }
-
-    var segments: [FormatSegment] {
-        switch self {
-        case .harold:
-            [
+#if DEBUG
+extension FormatType {
+    static var mock: Self {
+        Self(
+            id: "harold",
+            title: "Harold",
+            name: "Harold",
+            description: "A classic long-form structure with repeated beats and group games.",
+            segments: [
                 FormatSegment(title: "Intro", portion: 0.08),
                 FormatSegment(title: "Beat 1", portion: 0.24),
                 FormatSegment(title: "Group Game 1", portion: 0.08),
                 FormatSegment(title: "Beat 2", portion: 0.24),
                 FormatSegment(title: "Group Game 2", portion: 0.08),
                 FormatSegment(title: "Beat 3 / Wrap-Up", portion: 0.28)
-            ]
-
-        case .montage:
-            [
-                FormatSegment(title: "Opening", portion: 0.30),
-                FormatSegment(title: "Heightening", portion: 0.40),
-                FormatSegment(title: "Tag Run", portion: 0.20),
-                FormatSegment(title: "Wrap-Up", portion: 0.10)
-            ]
-        }
-    }
-
-    var name: String {
-        return switch self {
-        case .harold:
-            "Harold"
-        case .montage:
-            "Montage"
-        }
-    }
-
-    var description: String {
-        switch self {
-        case .harold:
-            return "A classic long-form structure with repeated beats and group games."
-        case .montage:
-            return "A flexible format featuring multiple independent scenes."
-        }
+            ],
+            requiredOpeningId: nil,
+            preferredOpeningId: "invocation",
+            allowedOpeningIds: ["invocation", "organic_opening", "living_room"]
+        )
     }
 }
+
+#endif

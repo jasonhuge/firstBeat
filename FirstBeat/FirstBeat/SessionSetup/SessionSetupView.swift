@@ -20,17 +20,28 @@ struct SessionSetupView: View {
         VStack(spacing: 0) {
 
             ScrollView {
-                VStack(spacing: 32) {
+                VStack(spacing: Constants.contentSpacing) {
 
                     SuggestionCard(
                         suggestion: store.suggestion
                     )
 
-                    FormatTypePills(
-                        formats: FormatType.allCases,
-                        selected: store.selectedType
-                    ) {
-                        store.send(.typeSelected($0))
+                    if let selectedType = store.selectedType {
+                        FormatTypePills(
+                            formats: store.formats,
+                            selected: selectedType
+                        ) {
+                            store.send(.typeSelected($0))
+                        }
+                    }
+
+                    if !store.availableOpenings.isEmpty {
+                        OpeningSection(
+                            openings: store.availableOpenings,
+                            selected: store.selectedOpening
+                        ) {
+                            store.send(.openingSelected($0))
+                        }
                     }
 
                     DurationSection(
@@ -39,7 +50,7 @@ struct SessionSetupView: View {
                         store.send(.durationChanged($0))
                     }
                 }
-                .padding(.top, 24)
+                .padding(.top, Constants.contentTopPadding)
             }
 
             StartButton {
@@ -51,18 +62,28 @@ struct SessionSetupView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             impactGenerator.prepare()
+            store.send(.onAppear)
         }
+    }
+}
+
+// MARK: - Constants
+
+extension SessionSetupView {
+    enum Constants {
+        static let contentSpacing: CGFloat = 32
+        static let contentTopPadding: CGFloat = 24
     }
 }
 
 // MARK: - Suggestion Card
 
 struct SuggestionCard: View {
-    let suggestion: String
+    let suggestion: String?
 
     var body: some View {
-        if !suggestion.isEmpty {
-            VStack(alignment: .leading, spacing: 12) {
+        if let suggestion = suggestion, !suggestion.isEmpty {
+            VStack(alignment: .leading, spacing: Constants.spacing) {
 
                 Text("Suggestion")
                     .font(.headline)
@@ -70,14 +91,80 @@ struct SuggestionCard: View {
                 Text(suggestion)
                     .font(.title2)
                     .fontWeight(.semibold)
-                    .padding()
+                    .foregroundColor(Color(.label))
+                    .padding(Constants.textPadding)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(.systemGray6))
+                        RoundedRectangle(cornerRadius: Constants.cornerRadius)
+                            .fill(Color(.secondarySystemBackground))
+                            .shadow(color: .black.opacity(Constants.shadowOpacity), radius: Constants.shadowRadius, y: Constants.shadowY)
                     )
             }
-            .padding(.horizontal)
+            .padding(.horizontal, Constants.horizontalPadding)
+        }
+    }
+}
+
+// MARK: - Constants
+
+extension SuggestionCard {
+    enum Constants {
+        static let spacing: CGFloat = 12
+        static let textPadding: CGFloat = 12
+        static let cornerRadius: CGFloat = 16
+        static let shadowOpacity: CGFloat = 0.08
+        static let shadowRadius: CGFloat = 4
+        static let shadowY: CGFloat = 2
+        static let horizontalPadding: CGFloat = 16
+    }
+}
+
+// MARK: - Flow Layout Helper
+
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 12
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let result = FlowResult(in: proposal.replacingUnspecifiedDimensions().width, subviews: subviews, spacing: spacing)
+        return result.size
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let result = FlowResult(in: bounds.width, subviews: subviews, spacing: spacing)
+        for (index, subview) in subviews.enumerated() {
+            subview.place(at: CGPoint(x: bounds.minX + result.positions[index].x, y: bounds.minY + result.positions[index].y), proposal: .unspecified)
+        }
+    }
+
+    struct FlowResult {
+        var size: CGSize
+        var positions: [CGPoint]
+
+        init(in maxWidth: CGFloat, subviews: Subviews, spacing: CGFloat) {
+            var positions: [CGPoint] = []
+            var size: CGSize = .zero
+            var currentX: CGFloat = 0
+            var currentY: CGFloat = 0
+            var lineHeight: CGFloat = 0
+
+            for subview in subviews {
+                let subviewSize = subview.sizeThatFits(.unspecified)
+
+                if currentX + subviewSize.width > maxWidth && currentX > 0 {
+                    currentX = 0
+                    currentY += lineHeight + spacing
+                    lineHeight = 0
+                }
+
+                positions.append(CGPoint(x: currentX, y: currentY))
+                lineHeight = max(lineHeight, subviewSize.height)
+                currentX += subviewSize.width + spacing
+                size.width = max(size.width, currentX - spacing)
+            }
+
+            size.height = currentY + lineHeight
+            self.size = size
+            self.positions = positions
         }
     }
 }
@@ -90,42 +177,56 @@ struct FormatTypePills: View {
     let onSelect: (FormatType) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: Constants.vStackSpacing) {
 
             Text("Format")
                 .font(.headline)
-                .padding(.horizontal)
+                .padding(.horizontal, Constants.horizontalPadding)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(formats) { format in
-                        Button {
-                            onSelect(format)
-                        } label: {
-                            Text(format.title)
-                                .fontWeight(.semibold)
-                                .padding(.vertical, 10)
-                                .padding(.horizontal, 20)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 20)
-                                        .fill(
-                                            selected.id == format.id
-                                            ? Color.blue
-                                            : Color(.systemGray5)
-                                        )
-                                )
-                                .foregroundStyle(
-                                    selected.id == format.id
-                                    ? Color.white
-                                    : Color.primary
-                                )
-                        }
-                        .animation(.easeInOut(duration: 0.2), value: selected.id)
+            FlowLayout(spacing: Constants.flowSpacing) {
+                ForEach(formats) { format in
+                    Button {
+                        onSelect(format)
+                    } label: {
+                        Text(format.title)
+                            .fontWeight(.semibold)
+                            .lineLimit(1)
+                            .padding(.vertical, Constants.pillVerticalPadding)
+                            .padding(.horizontal, Constants.pillHorizontalPadding)
+                            .background(
+                                RoundedRectangle(cornerRadius: Constants.cornerRadius)
+                                    .fill(
+                                        selected.id == format.id
+                                        ? AppTheme.practiceColor
+                                        : Color(.systemGray5)
+                                    )
+                            )
+                            .foregroundStyle(
+                                selected.id == format.id
+                                ? Color.white
+                                : Color.primary
+                            )
                     }
+                    .animation(.easeInOut(duration: Constants.animationDuration), value: selected.id)
                 }
-                .padding(.horizontal)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, Constants.horizontalPadding)
         }
+    }
+}
+
+// MARK: - Constants
+
+extension FormatTypePills {
+    enum Constants {
+        static let vStackSpacing: CGFloat = 12
+        static let flowSpacing: CGFloat = 12
+        static let pillVerticalPadding: CGFloat = 12
+        static let pillHorizontalPadding: CGFloat = 16
+        static let cornerRadius: CGFloat = 16
+        static let animationDuration: CGFloat = 0.2
+        static let horizontalPadding: CGFloat = 16
     }
 }
 
@@ -136,17 +237,26 @@ struct DurationSection: View {
     let onChange: (Int) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: Constants.spacing) {
 
             Text("How long are we playing?")
                 .font(.headline)
-                .padding(.horizontal)
+                .padding(.horizontal, Constants.horizontalPadding)
 
             DurationCard(
                 totalDuration: totalDuration,
                 onChange: onChange
             )
         }
+    }
+}
+
+// MARK: - Constants
+
+extension DurationSection {
+    enum Constants {
+        static let spacing: CGFloat = 12
+        static let horizontalPadding: CGFloat = 16
     }
 }
 
@@ -163,20 +273,21 @@ struct DurationCard: View {
     private let feedback = UISelectionFeedbackGenerator()
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: Constants.outerSpacing) {
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: Constants.innerSpacing) {
 
                 Text("\(totalDuration) minutes")
                     .font(.title2)
                     .fontWeight(.semibold)
-                    .scaleEffect(animateTick ? 1.05 : 1.0)
-                    .opacity(animateTick ? 0.85 : 1.0)
-                    .animation(.easeOut(duration: 0.15), value: animateTick)
+                    .foregroundColor(Color(.label))
+                    .scaleEffect(animateTick ? Constants.animateScale : 1.0)
+                    .opacity(animateTick ? Constants.animateOpacity : 1.0)
+                    .animation(.easeOut(duration: Constants.animationDuration), value: animateTick)
 
                 Text(durationDescriptor)
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundColor(Color(.secondaryLabel))
             }
 
             Slider(
@@ -195,17 +306,18 @@ struct DurationCard: View {
                         onChange(intValue)
                     }
                 ),
-                in: 5...60,
-                step: 5
+                in: Constants.sliderMin...Constants.sliderMax,
+                step: Constants.sliderStep
             )
         }
-        .padding()
+        .padding(Constants.cardPadding)
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemGray6))
+            RoundedRectangle(cornerRadius: Constants.cornerRadius)
+                .fill(Color(.secondarySystemBackground))
+                .shadow(color: .black.opacity(Constants.shadowOpacity), radius: Constants.shadowRadius, y: Constants.shadowY)
         )
-        .padding(.horizontal)
+        .padding(.horizontal, Constants.horizontalPadding)
         .onAppear {
             feedback.prepare()
             lastValue = totalDuration
@@ -228,6 +340,26 @@ struct DurationCard: View {
     }
 }
 
+// MARK: - Constants
+
+extension DurationCard {
+    enum Constants {
+        static let outerSpacing: CGFloat = 16
+        static let innerSpacing: CGFloat = 4
+        static let animateScale: CGFloat = 1.05
+        static let animateOpacity: CGFloat = 0.85
+        static let animationDuration: CGFloat = 0.15
+        static let sliderMin: Double = 5
+        static let sliderMax: Double = 60
+        static let sliderStep: Double = 5
+        static let cardPadding: CGFloat = 16
+        static let cornerRadius: CGFloat = 16
+        static let shadowOpacity: CGFloat = 0.08
+        static let shadowRadius: CGFloat = 4
+        static let shadowY: CGFloat = 2
+        static let horizontalPadding: CGFloat = 16
+    }
+}
 
 // MARK: - Start Button
 
@@ -236,18 +368,106 @@ struct StartButton: View {
 
     var body: some View {
         Button(action: action) {
-            Text("Let’s Begin")
+            Text("Let's Begin")
                 .font(.headline)
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
-                .padding()
+                .padding(Constants.buttonPadding)
                 .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color.blue)
+                    RoundedRectangle(cornerRadius: Constants.cornerRadius)
+                        .fill(AppTheme.practiceColor)
                 )
         }
-        .padding(.horizontal)
-        .padding(.vertical, 16)
+        .padding(.horizontal, Constants.horizontalPadding)
+        .padding(.vertical, Constants.verticalPadding)
+    }
+}
+
+// MARK: - Constants
+
+extension StartButton {
+    enum Constants {
+        static let buttonPadding: CGFloat = 16
+        static let cornerRadius: CGFloat = 16
+        static let horizontalPadding: CGFloat = 16
+        static let verticalPadding: CGFloat = 16
+    }
+}
+
+// MARK: - Opening Section
+
+struct OpeningSection: View {
+    let openings: [Opening]
+    let selected: Opening?
+    let onSelect: (Opening?) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Constants.spacing) {
+
+            Text("Opening")
+                .font(.headline)
+                .padding(.horizontal, Constants.horizontalPadding)
+
+            FlowLayout(spacing: Constants.flowSpacing) {
+                ForEach(openings) { opening in
+                    OpeningPill(
+                        opening: opening,
+                        isSelected: selected?.id == opening.id,
+                        onSelect: onSelect
+                    )
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, Constants.horizontalPadding)
+        }
+    }
+}
+
+// MARK: - Constants
+
+extension OpeningSection {
+    enum Constants {
+        static let spacing: CGFloat = 12
+        static let horizontalPadding: CGFloat = 16
+        static let flowSpacing: CGFloat = 12
+    }
+}
+
+// MARK: - Opening Pill
+
+struct OpeningPill: View {
+    let opening: Opening
+    let isSelected: Bool
+    let onSelect: (Opening?) -> Void
+
+    var body: some View {
+        Button {
+            onSelect(opening)
+        } label: {
+            Text(opening.name)
+                .fontWeight(.semibold)
+                .font(.subheadline)
+                .lineLimit(1)
+                .padding(.vertical, Constants.verticalPadding)
+                .padding(.horizontal, Constants.horizontalPadding)
+                .background(
+                    RoundedRectangle(cornerRadius: Constants.cornerRadius)
+                        .fill(isSelected ? AppTheme.practiceColor : Color(.systemGray5))
+                )
+                .foregroundColor(isSelected ? .white : .primary)
+        }
+        .animation(.easeInOut(duration: Constants.animationDuration), value: isSelected)
+    }
+}
+
+// MARK: - Constants
+
+extension OpeningPill {
+    enum Constants {
+        static let verticalPadding: CGFloat = 12
+        static let horizontalPadding: CGFloat = 16
+        static let cornerRadius: CGFloat = 16
+        static let animationDuration: CGFloat = 0.2
     }
 }
 

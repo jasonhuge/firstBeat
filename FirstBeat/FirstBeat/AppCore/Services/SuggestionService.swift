@@ -45,7 +45,6 @@ private func runSuggestionStream(
     var seenSuggestions: Set<String> = []
     var session = LanguageModelSession()
     var currentInput = input
-    var didFallback = false
 
     while true {
         do {
@@ -69,11 +68,10 @@ private func runSuggestionStream(
                 .randomElement() {
 
                 currentInput = fallbackInput
-                didFallback = true
                 session = LanguageModelSession()
                 continue
             }
-            
+
             // Any other failure or repeated fallback → stop silently
             break
         }

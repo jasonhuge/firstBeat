@@ -11,10 +11,18 @@ import ComposableArchitecture
 
 struct SessionSetupFeatureTests {
 
-    @Test func initialState() {
+    @Test func initialStateWithSuggestion() {
         let state = SessionSetupFeature.State(suggestion: "Test suggestion")
 
         #expect(state.suggestion == "Test suggestion")
+        #expect(state.selectedType == .harold)
+        #expect(state.totalDuration == 25)
+    }
+
+    @Test func initialStateWithoutSuggestion() {
+        let state = SessionSetupFeature.State(suggestion: nil)
+
+        #expect(state.suggestion == nil)
         #expect(state.selectedType == .harold)
         #expect(state.totalDuration == 25)
     }
@@ -43,7 +51,7 @@ struct SessionSetupFeatureTests {
         }
     }
 
-    @Test func startSelectedSendsNextAction() async {
+    @Test func startSelectedSendsNextActionWithSuggestion() async {
         let store = TestStore(
             initialState: SessionSetupFeature.State(
                 suggestion: "Test",
@@ -56,5 +64,20 @@ struct SessionSetupFeatureTests {
 
         await store.send(.startSelected)
         await store.receive(.next("Test", .montage, 30))
+    }
+
+    @Test func startSelectedSendsNextActionWithoutSuggestion() async {
+        let store = TestStore(
+            initialState: SessionSetupFeature.State(
+                suggestion: nil,
+                selectedType: .harold,
+                totalDuration: 25
+            )
+        ) {
+            SessionSetupFeature()
+        }
+
+        await store.send(.startSelected)
+        await store.receive(.next(nil, .harold, 25))
     }
 }

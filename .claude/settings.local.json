@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xcodebuild test:*)",
+      "Bash(xcodebuild:*)",
+      "Bash(xcrun simctl list:*)",
+      "Bash(killall:*)",
+      "Bash(swift build:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(python3:*)",
+      "WebFetch(domain:www.learnimprov.com)",
+      "WebSearch",
+      "WebFetch(domain:saccomedyspot.com)"
+    ]
+  }
+}

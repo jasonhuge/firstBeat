@@ -12,15 +12,46 @@ import ComposableArchitecture
 @MainActor
 struct SessionFeatureTests {
 
-    @Test func initialState() {
+    // Test helper
+    static let testHaroldFormat = FormatType(
+        id: "harold",
+        title: "Harold",
+        name: "Harold",
+        description: "A classic long-form structure with repeated beats and group games.",
+        segments: [
+            FormatSegment(title: "Intro", portion: 0.08),
+            FormatSegment(title: "Beat 1", portion: 0.24),
+            FormatSegment(title: "Group Game 1", portion: 0.08),
+            FormatSegment(title: "Beat 2", portion: 0.24),
+            FormatSegment(title: "Group Game 2", portion: 0.08),
+            FormatSegment(title: "Beat 3 / Wrap-Up", portion: 0.28)
+        ]
+    )
+
+    @Test func initialStateWithTitle() {
         let state = SessionFeature.State(
             title: "Test",
-            format: .harold,
+            format: Self.testHaroldFormat,
             duration: 25
         )
 
         #expect(state.title == "Test")
-        #expect(state.format == .harold)
+        #expect(state.format == Self.testHaroldFormat)
+        #expect(state.duration == 25)
+        #expect(state.currentSegmentIndex == 0)
+        #expect(state.timerRunning == false)
+        #expect(state.showPreshowCountdown == false)
+    }
+
+    @Test func initialStateWithoutTitle() {
+        let state = SessionFeature.State(
+            title: nil,
+            format: Self.testHaroldFormat,
+            duration: 25
+        )
+
+        #expect(state.title == nil)
+        #expect(state.format == Self.testHaroldFormat)
         #expect(state.duration == 25)
         #expect(state.currentSegmentIndex == 0)
         #expect(state.timerRunning == false)
@@ -33,7 +64,7 @@ struct SessionFeatureTests {
         let store = TestStore(
             initialState: SessionFeature.State(
                 title: "Test",
-                format: .harold,
+                format: Self.testHaroldFormat,
                 duration: 25
             )
         ) {
@@ -59,7 +90,7 @@ struct SessionFeatureTests {
         let store = TestStore(
             initialState: SessionFeature.State(
                 title: "Test",
-                format: .harold,
+                format: Self.testHaroldFormat,
                 duration: 25,
                 timerRunning: true,
                 showTimerUI: true
@@ -85,7 +116,7 @@ struct SessionFeatureTests {
         let store = TestStore(
             initialState: SessionFeature.State(
                 title: "Test",
-                format: .harold,
+                format: Self.testHaroldFormat,
                 duration: 25,
                 timerRunning: true,
                 showPreshowCountdown: true,
@@ -116,7 +147,7 @@ struct SessionFeatureTests {
         let store = TestStore(
             initialState: SessionFeature.State(
                 title: "Test",
-                format: .harold,
+                format: Self.testHaroldFormat,
                 duration: 25,
                 timerRunning: true,
                 showPreshowCountdown: true,
@@ -132,7 +163,7 @@ struct SessionFeatureTests {
             $0.showPreshowCountdown = false
             $0.currentSegmentIndex = 0
             $0.elapsedTime = 0
-            $0.remainingTime = FormatType.harold.segments[0].duration(from: 25)
+            $0.remainingTime = SessionFeatureTests.testHaroldFormat.segments[0].duration(from: 25)
         }
 
         await store.receive(.startSegmentTimer(resume: false)) {
@@ -144,10 +175,10 @@ struct SessionFeatureTests {
         let store = TestStore(
             initialState: SessionFeature.State(
                 title: "Test",
-                format: .harold,
+                format: Self.testHaroldFormat,
                 duration: 25,
-                timerRunning: true,
-                remainingTime: 10
+                remainingTime: 10,
+                timerRunning: true
             )
         ) {
             SessionFeature()
@@ -166,11 +197,11 @@ struct SessionFeatureTests {
         let store = TestStore(
             initialState: SessionFeature.State(
                 title: "Test",
-                format: .harold,
+                format: Self.testHaroldFormat,
                 duration: 25,
                 currentSegmentIndex: 0,
-                timerRunning: true,
-                remainingTime: 0
+                remainingTime: 0,
+                timerRunning: true
             )
         ) {
             SessionFeature()
@@ -182,7 +213,7 @@ struct SessionFeatureTests {
             $0.timerRunning = false
             $0.currentSegmentIndex = 1
             $0.segmentElapsedTime = 0
-            $0.remainingTime = FormatType.harold.segments[1].duration(from: 25)
+            $0.remainingTime = SessionFeatureTests.testHaroldFormat.segments[1].duration(from: 25)
         }
 
         await store.receive(.startSegmentTimer(resume: false)) {
@@ -191,16 +222,16 @@ struct SessionFeatureTests {
     }
 
     @Test func finalSegmentCompletionShowsConfetti() async {
-        let lastSegmentIndex = FormatType.harold.segments.count - 1
+        let lastSegmentIndex = SessionFeatureTests.testHaroldFormat.segments.count - 1
 
         let store = TestStore(
             initialState: SessionFeature.State(
                 title: "Test",
-                format: .harold,
+                format: Self.testHaroldFormat,
                 duration: 25,
                 currentSegmentIndex: lastSegmentIndex,
-                timerRunning: true,
-                remainingTime: 0
+                remainingTime: 0,
+                timerRunning: true
             )
         ) {
             SessionFeature()
@@ -217,7 +248,7 @@ struct SessionFeatureTests {
     @Test func totalDurationText() {
         let state = SessionFeature.State(
             title: "Test",
-            format: .harold,
+            format: Self.testHaroldFormat,
             duration: 30
         )
 

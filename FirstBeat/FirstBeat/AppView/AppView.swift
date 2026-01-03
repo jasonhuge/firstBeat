@@ -38,7 +38,7 @@ struct AppView: View {
                 }
             case .practiceSession:
                 if let store = store.scope(state: \.practiceSession, action: \.practiceSession) {
-                    PracticeView(store: store)
+                    SessionView(store: store)
                 }
             case .warmUpList:
                 if let store = store.scope(state: \.warmUpList, action: \.warmUpList) {

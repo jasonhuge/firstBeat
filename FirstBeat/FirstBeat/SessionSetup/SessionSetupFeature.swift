@@ -6,39 +6,116 @@
 //
 
 import ComposableArchitecture
+import Dependencies
 
 @Reducer
 struct SessionSetupFeature {
     @ObservableState
     struct State: Equatable {
-        var suggestion: String
-        var selectedType: FormatType = .harold
+        var suggestion: String?
+        var formats: [FormatType] = []
+        var selectedType: FormatType?
         var totalDuration: Int = 25
+
+        // Opening selection
+        var openings: [Opening] = []
+        var selectedOpening: Opening?
+        var availableOpenings: [Opening] = []
+
+        mutating func updateAvailableOpenings() {
+            guard let selectedFormat = selectedType else {
+                availableOpenings = []
+                return
+            }
+
+            // Filter by allowed opening IDs if specified
+            if let allowedIds = selectedFormat.allowedOpeningIds {
+                availableOpenings = openings.filter { allowedIds.contains($0.id) }
+            } else {
+                // If no allowed IDs specified, show all openings
+                availableOpenings = openings
+            }
+        }
     }
 
+    @Dependency(\.formatService) var formatService
+    @Dependency(\.openingService) var openingService
+
     enum Action: Equatable {
+        case onAppear
         case typeSelected(FormatType)
+        case openingSelected(Opening?)
         case durationChanged(Int)
         case startSelected
-        case next(String, FormatType, Int)
+        case delegate(Delegate)
+
+        @CasePathable
+        enum Delegate: Equatable {
+            case next(String?, FormatType, Opening, Int)
+        }
     }
 
     var body: some Reducer<State, Action> {
         Reduce { state, action in
             switch action {
+            case .onAppear:
+                state.formats = formatService.fetchFormats()
+                state.openings = openingService.fetchOpenings()
+
+                if let firstFormat = state.formats.first {
+                    state.selectedType = firstFormat
+                    state.updateAvailableOpenings()
+
+                    // Auto-select required opening, or preferred opening if no required
+                    if let requiredId = firstFormat.requiredOpeningId {
+                        state.selectedOpening = state.openings.first { $0.id == requiredId }
+                    } else if let preferredId = firstFormat.preferredOpeningId {
+                        state.selectedOpening = state.openings.first { $0.id == preferredId }
+                    }
+                }
+                return .none
+
             case .typeSelected(let type):
                 state.selectedType = type
+                state.updateAvailableOpenings()
+
+                // Auto-select required opening, preferred opening, or first available
+                if let requiredId = type.requiredOpeningId {
+                    state.selectedOpening = state.openings.first { $0.id == requiredId }
+                } else if let preferredId = type.preferredOpeningId {
+                    state.selectedOpening = state.openings.first { $0.id == preferredId }
+                } else {
+                    // If no preference, select first available opening
+                    state.selectedOpening = state.availableOpenings.first
+                }
                 return .none
+
+            case .openingSelected(let opening):
+                state.selectedOpening = opening
+                return .none
+
             case .durationChanged(let minutes):
                 state.totalDuration = minutes
                 return .none
+
             case .startSelected:
-                return .send(.next(
+                guard let selectedType = state.selectedType else {
+                    return .none
+                }
+
+                // Validate: opening is always required
+                guard let selectedOpening = state.selectedOpening else {
+                    return .none
+                }
+
+                return .send(.delegate(.next(
                     state.suggestion,
-                    state.selectedType,
+                    selectedType,
+                    selectedOpening,
                     state.totalDuration
-                ))
-            case .next:
+                )))
+
+            case .delegate:
                 return .none
             }
         }

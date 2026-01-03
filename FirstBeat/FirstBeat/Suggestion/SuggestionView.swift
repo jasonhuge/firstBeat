@@ -23,11 +23,6 @@ struct SuggestionView: View {
         VStack(spacing: 0) {
             makeContent()
                 .toolbar {
-                    ToolbarItem(placement: .title) {
-                        Text("First Beat")
-                            .font(.title2)
-                            .bold()
-                    }
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
                             store.send(.deleteAll)
@@ -40,29 +35,78 @@ struct SuggestionView: View {
 
             makeFooter()
         }
+        .navigationTitle("AI Suggestion")
+        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             impactGenerator.prepare()
         }
     }
 }
 
+// MARK: - Constants
+
+extension SuggestionView {
+    enum Constants {
+        static let idleIconSize: CGFloat = 50
+        static let idleIconOpacity: CGFloat = 0.7
+        static let idleSpacing: CGFloat = 12
+
+        static let conversationSpacing: CGFloat = 24
+        static let responseSpacing: CGFloat = 16
+        static let scrollAnimationDuration: CGFloat = 0.4
+
+        static let promptPadding: CGFloat = 12
+        static let promptCornerRadius: CGFloat = 16
+
+        static let aiResponseSpacing: CGFloat = 12
+        static let aiResponsePadding: CGFloat = 12
+        static let aiResponseBackgroundOpacity: CGFloat = 0.1
+        static let aiResponseCornerRadius: CGFloat = 16
+        static let cardPadding: CGFloat = 12
+        static let cardCornerRadius: CGFloat = 16
+        static let cardShadowOpacity: CGFloat = 0.08
+        static let cardShadowRadius: CGFloat = 4
+        static let cardShadowY: CGFloat = 2
+
+        static let footerHorizontalPadding: CGFloat = 16
+        static let footerVerticalPadding: CGFloat = 12
+        static let footerSpacing: CGFloat = 12
+        static let textFieldPaddingTop: CGFloat = 12
+        static let textFieldPaddingLeading: CGFloat = 16
+        static let textFieldPaddingBottom: CGFloat = 12
+        static let textFieldPaddingTrailing: CGFloat = 16
+        static let textFieldCornerRadius: CGFloat = 30
+        static let textFieldBackgroundOpacity: CGFloat = 0.1
+        static let buttonPadding: CGFloat = 14
+        static let buttonShadowRadius: CGFloat = 2
+        static let buttonDisabledOpacity: CGFloat = 0.5
+        static let footerBackgroundOpacity: CGFloat = 0.95
+        static let footerShadowOpacity: CGFloat = 0.08
+        static let footerShadowRadius: CGFloat = 8
+        static let footerShadowY: CGFloat = -4
+    }
+}
+
+// MARK: - Components
+
 extension SuggestionView {
     @ViewBuilder
     private func makeIdleContent() -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: "brain.head.profile")
+        VStack(spacing: Constants.idleSpacing) {
+            Image(systemName: "sparkles")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 50, height: 50)
-                .foregroundColor(.primary.opacity(0.7))
+                .frame(width: Constants.idleIconSize, height: Constants.idleIconSize)
+                .foregroundColor(.primary.opacity(Constants.idleIconOpacity))
 
-            Text("Welcome!")
+            Text("Get a Suggestion")
                 .font(.title2)
                 .bold()
 
-            Text("Ask for an improv suggestion to begin your practice session.")
+            Text("Ask for an improv suggestion to inspire your practice.")
                 .font(.body)
                 .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .padding()
@@ -84,9 +128,9 @@ extension SuggestionView {
 
     @ViewBuilder
     private func makeConversations(proxy: ScrollViewProxy) -> some View {
-        VStack(spacing: 24) {
+        VStack(spacing: Constants.conversationSpacing) {
             ForEach(store.conversations) { conversation in
-                VStack(spacing: 16) {
+                VStack(spacing: Constants.responseSpacing) {
                     makePrompt(conversation.prompt)
                     makeAIResponse(conversation.contentArray)
                 }
@@ -96,7 +140,7 @@ extension SuggestionView {
         .padding()
         .onChange(of: store.conversations.count, initial: false) { _, _ in
             guard let lastID = store.conversations.last?.id else { return }
-            withAnimation(.easeOut(duration: 0.4)) {
+            withAnimation(.easeOut(duration: Constants.scrollAnimationDuration)) {
                 proxy.scrollTo(lastID, anchor: .bottom)
             }
         }
@@ -108,16 +152,16 @@ extension SuggestionView {
             Spacer()
             Text("Can we get a suggestion of **\(text)**?")
                 .foregroundColor(.white)
-                .padding(12)
-                .background(Color.blue)
-                .cornerRadius(16)
+                .padding(Constants.promptPadding)
+                .background(AppTheme.practiceColor)
+                .cornerRadius(Constants.promptCornerRadius)
         }
     }
 
     @ViewBuilder
     private func makeAIResponse(_ content: [String]) -> some View {
         HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: Constants.aiResponseSpacing) {
                 if content.isEmpty {
                     ThinkingView()
                 } else {
@@ -125,14 +169,14 @@ extension SuggestionView {
                         if suggestion.contains("Error") {
                             HStack {
                                 Text(suggestion)
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(Color(.label))
                                 Spacer()
                             }
-                            .padding()
+                            .padding(Constants.cardPadding)
                             .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color(.systemBackground))
-                                    .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
+                                RoundedRectangle(cornerRadius: Constants.cardCornerRadius)
+                                    .fill(Color(.secondarySystemBackground))
+                                    .shadow(color: .black.opacity(Constants.cardShadowOpacity), radius: Constants.cardShadowRadius, y: Constants.cardShadowY)
                             )
                         } else {
                             Button {
@@ -142,25 +186,25 @@ extension SuggestionView {
                             } label: {
                                 HStack {
                                     Text(suggestion)
-                                        .foregroundColor(.primary)
+                                        .foregroundColor(Color(.label))
                                     Spacer()
                                     Image(systemName: "chevron.right")
-                                        .foregroundColor(.secondary)
+                                        .foregroundColor(Color(.secondaryLabel))
                                 }
-                                .padding()
+                                .padding(Constants.cardPadding)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .fill(Color(.systemBackground))
-                                        .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
+                                    RoundedRectangle(cornerRadius: Constants.cardCornerRadius)
+                                        .fill(Color(.secondarySystemBackground))
+                                        .shadow(color: .black.opacity(Constants.cardShadowOpacity), radius: Constants.cardShadowRadius, y: Constants.cardShadowY)
                                 )
                             }
                         }
                     }
                 }
             }
-            .padding(12)
-            .background(Color.gray.opacity(0.1))
-            .cornerRadius(16)
+            .padding(Constants.aiResponsePadding)
+            .background(Color.gray.opacity(Constants.aiResponseBackgroundOpacity))
+            .cornerRadius(Constants.aiResponseCornerRadius)
 
             Spacer()
         }
@@ -168,16 +212,21 @@ extension SuggestionView {
 
     @ViewBuilder
     private func makeFooter() -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: Constants.footerSpacing) {
             TextField(
                 "Can we get a suggestion of ...",
                 text: $store.textInput
             )
             .textInputAutocapitalization(.sentences)
             .disableAutocorrection(false)
-            .padding(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
-            .background(Color.gray.opacity(0.1))
-            .cornerRadius(30)
+            .padding(EdgeInsets(
+                top: Constants.textFieldPaddingTop,
+                leading: Constants.textFieldPaddingLeading,
+                bottom: Constants.textFieldPaddingBottom,
+                trailing: Constants.textFieldPaddingTrailing
+            ))
+            .background(Color.gray.opacity(Constants.textFieldBackgroundOpacity))
+            .cornerRadius(Constants.textFieldCornerRadius)
             .focused($isTextFieldFocused)
 
             Button {
@@ -187,19 +236,19 @@ extension SuggestionView {
             } label: {
                 Image(systemName: "arrow.up")
                     .foregroundColor(.white)
-                    .padding(14)
-                    .background(Color.blue)
+                    .padding(Constants.buttonPadding)
+                    .background(AppTheme.practiceColor)
                     .clipShape(Circle())
-                    .shadow(radius: 2)
-                    .opacity(store.textInput.isEmpty ? 0.5 : 1.0)
+                    .shadow(radius: Constants.buttonShadowRadius)
+                    .opacity(store.textInput.isEmpty ? Constants.buttonDisabledOpacity : 1.0)
             }
             .disabled(store.textInput.isEmpty)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color(.systemBackground).opacity(0.95))
+        .padding(.horizontal, Constants.footerHorizontalPadding)
+        .padding(.vertical, Constants.footerVerticalPadding)
+        .background(Color(.systemBackground).opacity(Constants.footerBackgroundOpacity))
         .compositingGroup()
-        .shadow(color: .black.opacity(0.08), radius: 8, y: -4)
+        .shadow(color: .black.opacity(Constants.footerShadowOpacity), radius: Constants.footerShadowRadius, y: Constants.footerShadowY)
     }
 }
 

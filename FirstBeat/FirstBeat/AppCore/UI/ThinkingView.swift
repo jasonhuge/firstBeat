@@ -9,18 +9,16 @@ import SwiftUI
 
 struct ThinkingView: View {
     @State private var bounce = false
-    let dotCount = 3
-    let animation = Animation.easeInOut(duration: 0.4).repeatForever(autoreverses: true)
 
     var body: some View {
-        HStack(spacing: 6) {
-            ForEach(0..<dotCount, id: \.self) { index in
+        HStack(spacing: Constants.dotSpacing) {
+            ForEach(0..<Constants.dotCount, id: \.self) { index in
                 Circle()
                     .fill(Color.gray)
-                    .frame(width: 8, height: 8)
-                    .offset(y: bounce ? -5 : 5)
+                    .frame(width: Constants.dotSize, height: Constants.dotSize)
+                    .offset(y: bounce ? -Constants.bounceOffset : Constants.bounceOffset)
                     .animation(
-                        animation.delay(Double(index) * 0.15),
+                        Self.animation.delay(Double(index) * Constants.animationDelay),
                         value: bounce
                     )
             }
@@ -28,5 +26,22 @@ struct ThinkingView: View {
         .onAppear {
             bounce.toggle()
         }
+    }
+}
+
+// MARK: - Constants
+
+extension ThinkingView {
+    enum Constants {
+        static let dotCount: Int = 3
+        static let dotSpacing: CGFloat = 6
+        static let dotSize: CGFloat = 8
+        static let bounceOffset: CGFloat = 5
+        static let animationDuration: CGFloat = 0.4
+        static let animationDelay: CGFloat = 0.15
+    }
+
+    static var animation: Animation {
+        .easeInOut(duration: Constants.animationDuration).repeatForever(autoreverses: true)
     }
 }

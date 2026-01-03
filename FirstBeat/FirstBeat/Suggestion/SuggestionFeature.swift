@@ -11,13 +11,13 @@ import SwiftUI
 @Reducer
 struct SuggestionFeature {
     @ObservableState
-    struct State {
+    struct State: Equatable {
         var textInput: String = ""
         var conversations: [Conversation] = []
         var isFetching: Bool = false
     }
 
-    enum Action: BindableAction {
+    enum Action: BindableAction, Equatable {
         case binding(BindingAction<State>)
         case sendSuggestionTapped
         case conversationReceived(id: String, content: String)

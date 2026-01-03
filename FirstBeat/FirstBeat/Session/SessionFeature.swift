@@ -13,8 +13,9 @@ import ComposableArchitecture
 struct SessionFeature {
     @ObservableState
     struct State: Equatable {
-        var title: String
+        var title: String?
         var format: FormatType
+        var opening: Opening
         var duration: Int
 
         // UI

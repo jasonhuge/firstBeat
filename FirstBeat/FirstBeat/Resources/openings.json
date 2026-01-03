@@ -1,0 +1,86 @@
+[
+    {
+        "id": "organic_opening",
+        "name": "Organic Opening",
+        "description": "An ensemble-driven opening where performers freely move, speak, and react to a suggestion. Patterns, images, emotions, and relationships emerge organically, providing rich thematic fuel for scenes.",
+        "player_count": "Ensemble",
+        "setup_time": "3-5 minutes"
+    },
+    {
+        "id": "monologue",
+        "name": "Monologue",
+        "description": "A single performer shares a true, personal story inspired by the suggestion. The specificity, emotion, and point of view provide grounded material for scenes that explore similar themes or perspectives.",
+        "player_count": "Solo",
+        "setup_time": "3-5 minutes"
+    },
+    {
+        "id": "invocation",
+        "name": "Invocation",
+        "description": "Performers call out words, phrases, or short ideas inspired by the suggestion. The ensemble builds shared energy and a web of associations that can be mined for scenes.",
+        "player_count": "Ensemble",
+        "setup_time": "2-3 minutes"
+    },
+    {
+        "id": "living_room",
+        "name": "Living Room",
+        "description": "Performers sit casually and have a grounded, conversational discussion about the suggestion. Personal anecdotes, opinions, and tangents naturally generate scene ideas.",
+        "player_count": "3-6 players",
+        "setup_time": "2-4 minutes"
+    },
+    {
+        "id": "pattern_game",
+        "name": "Pattern Game",
+        "description": "The ensemble discovers a repeating verbal or physical pattern inspired by the suggestion. The game establishes tone and structure that can be revisited and heightened later in the show.",
+        "player_count": "Ensemble",
+        "setup_time": "3-5 minutes"
+    },
+    {
+        "id": "deconstruction",
+        "name": "Deconstruction",
+        "description": "The group explores the suggestion by breaking it down word-by-word, examining meanings, associations, and interpretations. This creates a wide thematic palette for scenes.",
+        "player_count": "Ensemble",
+        "setup_time": "2-3 minutes"
+    },
+    {
+        "id": "rant",
+        "name": "Rant",
+        "description": "One performer delivers a passionate, opinionated rant inspired by the suggestion. Strong emotion and clear point of view help launch bold, character-driven scenes.",
+        "player_count": "Solo",
+        "setup_time": "2-3 minutes"
+    },
+    {
+        "id": "interview",
+        "name": "Interview",
+        "description": "One performer interviews another who plays a character, expert, or person connected to the suggestion. The interview reveals details, stakes, and relationships that inspire scenes.",
+        "player_count": "2 players",
+        "setup_time": "3-4 minutes"
+    },
+    {
+        "id": "slideshow",
+        "name": "Slideshow",
+        "description": "The ensemble creates a series of frozen images inspired by the suggestion while a narrator describes each \"slide.\" The visuals and narration establish characters, locations, and story ideas.",
+        "player_count": "4-8 players",
+        "setup_time": "3-5 minutes"
+    },
+    {
+        "id": "documentary",
+        "name": "Documentary",
+        "description": "Performed in the style of a documentary, this opening uses talking heads, narration, and reenactments to build a fictional world around the suggestion.",
+        "player_count": "Ensemble",
+        "setup_time": "4-6 minutes"
+    },
+    {
+        "id": "conducted_story",
+        "name": "Conducted Story",
+        "description": "A conductor guides multiple performers as they collaboratively tell a story inspired by the suggestion. The focus is on shared narrative, pacing, and group listening.",
+        "player_count": "4+ players",
+        "setup_time": "3-4 minutes"
+    },
+    {
+        "id": "news_report",
+        "name": "News Report",
+        "description": "Performers present a satirical news broadcast inspired by the suggestion, featuring anchors, reporters, and experts. The format quickly establishes a world full of scene potential.",
+        "player_count": "3-6 players",
+        "setup_time": "3-5 minutes"
+    }
+]
