@@ -9,11 +9,23 @@ import Foundation
 import Dependencies
 
 struct OpeningService {
-    var fetchOpenings: () -> [Opening]
+    var fetchOpenings: () async -> [Opening]
 }
 
 extension OpeningService: DependencyKey {
     static var liveValue: OpeningService {
+        Self {
+            await RemoteConfigService.load(OpeningsRequest()) ?? []
+        }
+    }
+
+    static var testValue: OpeningService {
+        Self {
+            JSONLoader.load([Opening].self, filename: "openings") ?? []
+        }
+    }
+
+    static var previewValue: OpeningService {
         Self {
             JSONLoader.load([Opening].self, filename: "openings") ?? []
         }

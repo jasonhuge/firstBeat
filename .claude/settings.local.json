@@ -12,7 +12,8 @@
       "Bash(python3:*)",
       "WebFetch(domain:www.learnimprov.com)",
       "WebSearch",
-      "WebFetch(domain:saccomedyspot.com)"
+      "WebFetch(domain:saccomedyspot.com)",
+      "Bash(tee:*)"
     ]
   }
 }

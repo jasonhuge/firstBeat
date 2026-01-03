@@ -9,13 +9,25 @@ import Dependencies
 import Foundation
 
 struct WarmUpService {
-    var fetchWarmUps: () -> [WarmUp]
+    var fetchWarmUps: () async -> [WarmUp]
 }
 
 // MARK: - DependencyKey
 
 extension WarmUpService: DependencyKey {
     static var liveValue: WarmUpService {
+        Self {
+            await RemoteConfigService.load(WarmUpsRequest()) ?? []
+        }
+    }
+
+    static var testValue: WarmUpService {
+        Self {
+            JSONLoader.load([WarmUp].self, filename: "warmups") ?? []
+        }
+    }
+
+    static var previewValue: WarmUpService {
         Self {
             JSONLoader.load([WarmUp].self, filename: "warmups") ?? []
         }

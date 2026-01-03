@@ -43,6 +43,8 @@ struct SessionSetupFeature {
 
     enum Action: Equatable {
         case onAppear
+        case formatsLoaded([FormatType])
+        case openingsLoaded([Opening])
         case typeSelected(FormatType)
         case openingSelected(Opening?)
         case durationChanged(Int)
@@ -59,17 +61,30 @@ struct SessionSetupFeature {
         Reduce { state, action in
             switch action {
             case .onAppear:
-                state.formats = formatService.fetchFormats()
-                state.openings = openingService.fetchOpenings()
+                return .run { send in
+                    async let formats = formatService.fetchFormats()
+                    async let openings = openingService.fetchOpenings()
 
-                if let firstFormat = state.formats.first {
+                    await send(.formatsLoaded(formats))
+                    await send(.openingsLoaded(openings))
+                }
+
+            case .formatsLoaded(let formats):
+                state.formats = formats
+                if let firstFormat = formats.first {
                     state.selectedType = firstFormat
-                    state.updateAvailableOpenings()
+                }
+                return .none
 
-                    // Auto-select required opening, or preferred opening if no required
-                    if let requiredId = firstFormat.requiredOpeningId {
+            case .openingsLoaded(let openings):
+                state.openings = openings
+                state.updateAvailableOpenings()
+
+                // Auto-select required opening, or preferred opening if no required
+                if let selectedFormat = state.selectedType {
+                    if let requiredId = selectedFormat.requiredOpeningId {
                         state.selectedOpening = state.openings.first { $0.id == requiredId }
-                    } else if let preferredId = firstFormat.preferredOpeningId {
+                    } else if let preferredId = selectedFormat.preferredOpeningId {
                         state.selectedOpening = state.openings.first { $0.id == preferredId }
                     }
                 }

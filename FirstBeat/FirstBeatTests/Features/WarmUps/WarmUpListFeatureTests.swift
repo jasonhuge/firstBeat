@@ -43,7 +43,8 @@ struct WarmUpListFeatureTests {
             $0.warmUpService.fetchWarmUps = { mockWarmUps }
         }
 
-        await store.send(.onAppear) {
+        await store.send(.onAppear)
+        await store.receive(.warmUpsLoaded(mockWarmUps)) {
             $0.warmUps = mockWarmUps
         }
     }

@@ -36,8 +36,10 @@ struct WarmUpListFeature {
         Reduce { state, action in
             switch action {
             case .onAppear:
-                let warmUps = service.fetchWarmUps()
-                return .send(.warmUpsLoaded(warmUps))
+                return .run { send in
+                    let warmUps = await service.fetchWarmUps()
+                    await send(.warmUpsLoaded(warmUps))
+                }
 
             case .warmUpsLoaded(let warmUps):
                 state.warmUps = warmUps
