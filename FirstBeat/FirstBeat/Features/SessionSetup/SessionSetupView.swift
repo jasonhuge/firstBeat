@@ -180,6 +180,8 @@ struct FormatTypePills: View {
     let selected: FormatType
     let onSelect: (FormatType) -> Void
 
+    @State private var showingInfo: FormatType?
+
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.vStackSpacing) {
 
@@ -189,33 +191,21 @@ struct FormatTypePills: View {
 
             FlowLayout(spacing: Constants.flowSpacing) {
                 ForEach(formats) { format in
-                    Button {
-                        onSelect(format)
-                    } label: {
-                        Text(format.title)
-                            .fontWeight(.semibold)
-                            .lineLimit(1)
-                            .padding(.vertical, Constants.pillVerticalPadding)
-                            .padding(.horizontal, Constants.pillHorizontalPadding)
-                            .background(
-                                RoundedRectangle(cornerRadius: Constants.cornerRadius)
-                                    .fill(
-                                        selected.id == format.id
-                                        ? AppTheme.practiceColor
-                                        : Color(.systemGray5)
-                                    )
-                            )
-                            .foregroundStyle(
-                                selected.id == format.id
-                                ? Color.white
-                                : Color.primary
-                            )
-                    }
-                    .animation(.easeInOut(duration: Constants.animationDuration), value: selected.id)
+                    FormatPillButton(
+                        format: format,
+                        isSelected: selected.id == format.id,
+                        onSelect: { onSelect(format) },
+                        onInfo: { showingInfo = format }
+                    )
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, Constants.horizontalPadding)
+        }
+        .sheet(item: $showingInfo) { format in
+            FormatInfoSheet(format: format)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
     }
 }
@@ -226,11 +216,119 @@ extension FormatTypePills {
     enum Constants {
         static let vStackSpacing: CGFloat = 12
         static let flowSpacing: CGFloat = 12
-        static let pillVerticalPadding: CGFloat = 12
-        static let pillHorizontalPadding: CGFloat = 16
+        static let horizontalPadding: CGFloat = 16
+    }
+}
+
+// MARK: - Format Pill Button
+
+struct FormatPillButton: View {
+    let format: FormatType
+    let isSelected: Bool
+    let onSelect: () -> Void
+    let onInfo: () -> Void
+
+    var body: some View {
+        HStack(spacing: Constants.spacing) {
+            Button(action: onSelect) {
+                Text(format.title)
+                    .fontWeight(.semibold)
+                    .lineLimit(1)
+            }
+
+            Button(action: onInfo) {
+                Image(systemName: "info.circle")
+                    .font(.system(size: Constants.iconSize))
+            }
+        }
+        .padding(.vertical, Constants.verticalPadding)
+        .padding(.horizontal, Constants.horizontalPadding)
+        .background(
+            RoundedRectangle(cornerRadius: Constants.cornerRadius)
+                .fill(isSelected ? AppTheme.practiceColor : Color(.systemGray5))
+        )
+        .foregroundColor(isSelected ? .white : .primary)
+        .animation(.easeInOut(duration: Constants.animationDuration), value: isSelected)
+    }
+}
+
+// MARK: - Constants
+
+extension FormatPillButton {
+    enum Constants {
+        static let spacing: CGFloat = 6
+        static let iconSize: CGFloat = 14
+        static let verticalPadding: CGFloat = 12
+        static let horizontalPadding: CGFloat = 16
         static let cornerRadius: CGFloat = 16
         static let animationDuration: CGFloat = 0.2
-        static let horizontalPadding: CGFloat = 16
+    }
+}
+
+// MARK: - Format Info Sheet
+
+struct FormatInfoSheet: View {
+    @Environment(\.dismiss) var dismiss
+    let format: FormatType
+
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: Constants.contentSpacing) {
+                    HStack {
+                        Image(systemName: "theatermasks")
+                            .font(.largeTitle)
+                            .foregroundColor(AppTheme.practiceColor)
+
+                        Text(format.title)
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                    }
+                    .padding(.bottom, Constants.titleBottomPadding)
+
+                    Text(format.description)
+                        .font(.body)
+                        .foregroundColor(Color(.label))
+
+                    Divider()
+
+                    VStack(alignment: .leading, spacing: Constants.segmentSpacing) {
+                        Text("Segments")
+                            .font(.headline)
+
+                        ForEach(format.segments) { segment in
+                            HStack {
+                                Text(segment.title)
+                                    .foregroundColor(Color(.label))
+                                Spacer()
+                                Text("\(Int(segment.portion * 100))%")
+                                    .foregroundColor(Color(.secondaryLabel))
+                            }
+                            .font(.subheadline)
+                        }
+                    }
+                }
+                .padding()
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Constants
+
+extension FormatInfoSheet {
+    enum Constants {
+        static let contentSpacing: CGFloat = 16
+        static let titleBottomPadding: CGFloat = 8
+        static let segmentSpacing: CGFloat = 8
     }
 }
 
@@ -405,6 +503,8 @@ struct OpeningSection: View {
     let selected: Opening?
     let onSelect: (Opening?) -> Void
 
+    @State private var showingInfo: Opening?
+
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.spacing) {
 
@@ -417,12 +517,18 @@ struct OpeningSection: View {
                     OpeningPill(
                         opening: opening,
                         isSelected: selected?.id == opening.id,
-                        onSelect: onSelect
+                        onSelect: { onSelect(opening) },
+                        onInfo: { showingInfo = opening }
                     )
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, Constants.horizontalPadding)
+        }
+        .sheet(item: $showingInfo) { opening in
+            OpeningInfoSheet(opening: opening)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
     }
 }
@@ -442,24 +548,30 @@ extension OpeningSection {
 struct OpeningPill: View {
     let opening: Opening
     let isSelected: Bool
-    let onSelect: (Opening?) -> Void
+    let onSelect: () -> Void
+    let onInfo: () -> Void
 
     var body: some View {
-        Button {
-            onSelect(opening)
-        } label: {
-            Text(opening.name)
-                .fontWeight(.semibold)
-                .font(.subheadline)
-                .lineLimit(1)
-                .padding(.vertical, Constants.verticalPadding)
-                .padding(.horizontal, Constants.horizontalPadding)
-                .background(
-                    RoundedRectangle(cornerRadius: Constants.cornerRadius)
-                        .fill(isSelected ? AppTheme.practiceColor : Color(.systemGray5))
-                )
-                .foregroundColor(isSelected ? .white : .primary)
+        HStack(spacing: Constants.spacing) {
+            Button(action: onSelect) {
+                Text(opening.name)
+                    .fontWeight(.semibold)
+                    .font(.subheadline)
+                    .lineLimit(1)
+            }
+
+            Button(action: onInfo) {
+                Image(systemName: "info.circle")
+                    .font(.system(size: Constants.iconSize))
+            }
         }
+        .padding(.vertical, Constants.verticalPadding)
+        .padding(.horizontal, Constants.horizontalPadding)
+        .background(
+            RoundedRectangle(cornerRadius: Constants.cornerRadius)
+                .fill(isSelected ? AppTheme.practiceColor : Color(.systemGray5))
+        )
+        .foregroundColor(isSelected ? .white : .primary)
         .animation(.easeInOut(duration: Constants.animationDuration), value: isSelected)
     }
 }
@@ -468,10 +580,82 @@ struct OpeningPill: View {
 
 extension OpeningPill {
     enum Constants {
+        static let spacing: CGFloat = 6
+        static let iconSize: CGFloat = 14
         static let verticalPadding: CGFloat = 12
         static let horizontalPadding: CGFloat = 16
         static let cornerRadius: CGFloat = 16
         static let animationDuration: CGFloat = 0.2
+    }
+}
+
+// MARK: - Opening Info Sheet
+
+struct OpeningInfoSheet: View {
+    @Environment(\.dismiss) var dismiss
+    let opening: Opening
+
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: Constants.contentSpacing) {
+                    HStack {
+                        Image(systemName: "star.circle")
+                            .font(.largeTitle)
+                            .foregroundColor(AppTheme.practiceColor)
+
+                        Text(opening.name)
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                    }
+                    .padding(.bottom, Constants.titleBottomPadding)
+
+                    Text(opening.description)
+                        .font(.body)
+                        .foregroundColor(Color(.label))
+
+                    if let playerCount = opening.playerCount {
+                        Divider()
+
+                        HStack {
+                            Image(systemName: "person.2")
+                                .foregroundColor(AppTheme.practiceColor)
+                            Text(playerCount)
+                                .font(.subheadline)
+                                .foregroundColor(Color(.secondaryLabel))
+                        }
+                    }
+
+                    if let setupTime = opening.setupTime {
+                        HStack {
+                            Image(systemName: "clock")
+                                .foregroundColor(AppTheme.practiceColor)
+                            Text(setupTime)
+                                .font(.subheadline)
+                                .foregroundColor(Color(.secondaryLabel))
+                        }
+                    }
+                }
+                .padding()
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Constants
+
+extension OpeningInfoSheet {
+    enum Constants {
+        static let contentSpacing: CGFloat = 16
+        static let titleBottomPadding: CGFloat = 8
     }
 }
 
