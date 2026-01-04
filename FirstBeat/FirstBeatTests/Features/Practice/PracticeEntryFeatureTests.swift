@@ -19,23 +19,35 @@ struct PracticeEntryFeatureTests {
         #expect(state != nil)
     }
 
-    @Test func getAISuggestion() async {
+    @Test func getAISuggestionOptionSendsDelegate() async {
         let store = TestStore(
             initialState: PracticeEntryFeature.State()
         ) {
             PracticeEntryFeature()
         }
 
-        await store.send(.getAISuggestion)
+        await store.send(.optionSelected(id: "getAISuggestion"))
+        await store.receive(.delegate(.getAISuggestion))
     }
 
-    @Test func startPractice() async {
+    @Test func startPracticeOptionSendsDelegate() async {
         let store = TestStore(
             initialState: PracticeEntryFeature.State()
         ) {
             PracticeEntryFeature()
         }
 
-        await store.send(.startPractice)
+        await store.send(.optionSelected(id: "startPractice"))
+        await store.receive(.delegate(.startPractice))
+    }
+
+    @Test func hasCorrectOptions() {
+        let state = PracticeEntryFeature.State()
+
+        #expect(state.options.count == 2)
+        #expect(state.options[0].id == "getAISuggestion")
+        #expect(state.options[0].title == "Get AI Suggestion")
+        #expect(state.options[1].id == "startPractice")
+        #expect(state.options[1].title == "Start Practice")
     }
 }

@@ -13,7 +13,8 @@
       "WebFetch(domain:www.learnimprov.com)",
       "WebSearch",
       "WebFetch(domain:saccomedyspot.com)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(swift test:*)"
     ]
   }
 }

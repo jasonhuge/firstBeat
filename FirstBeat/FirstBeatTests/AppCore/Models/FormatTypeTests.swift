@@ -43,33 +43,48 @@ struct FormatTypeTests {
             title: "Test 1",
             name: "Test 1",
             description: "Description",
-            segments: []
+            segments: [],
+            requiredOpeningId: nil,
+            preferredOpeningId: nil,
+            allowedOpeningIds: nil
         )
         let format2 = FormatType(
             id: "test2",
             title: "Test 2",
             name: "Test 2",
             description: "Description",
-            segments: []
+            segments: [],
+            requiredOpeningId: nil,
+            preferredOpeningId: nil,
+            allowedOpeningIds: nil
         )
 
         #expect(format1.id != format2.id)
     }
 
     @Test func formatTypeEquality() {
+        // Create segment once so both formats have the same segment (including ID)
+        let segment = FormatSegment(title: "Segment", portion: 0.5)
+
         let format1 = FormatType(
             id: "test",
             title: "Test",
             name: "Test",
             description: "Description",
-            segments: [FormatSegment(title: "Segment", portion: 0.5)]
+            segments: [segment],
+            requiredOpeningId: nil,
+            preferredOpeningId: nil,
+            allowedOpeningIds: nil
         )
         let format2 = FormatType(
             id: "test",
             title: "Test",
             name: "Test",
             description: "Description",
-            segments: [FormatSegment(title: "Segment", portion: 0.5)]
+            segments: [segment],
+            requiredOpeningId: nil,
+            preferredOpeningId: nil,
+            allowedOpeningIds: nil
         )
 
         #expect(format1 == format2)

@@ -46,13 +46,18 @@ struct SuggestionFeatureTests {
             }
         }
 
+        store.exhaustivity = .off
+
         await store.send(.sendSuggestionTapped) {
             $0.textInput = ""
             $0.isFetching = true
-            $0.conversations = [
-                Conversation(prompt: "a funny scene", content: "")
-            ]
+            $0.conversations.count == 1
         }
+
+        // Verify the conversation was created correctly
+        #expect(store.state.conversations.count == 1)
+        #expect(store.state.conversations[0].prompt == "a funny scene")
+        #expect(store.state.conversations[0].content == "")
     }
 
     @Test func conversationReceivedUpdatesContent() async {

@@ -26,5 +26,25 @@ extension Opening {
             setupTime: "3-5 minutes"
         )
     }
+
+    static var invocation: Self {
+        Self(
+            id: "invocation",
+            name: "Invocation",
+            description: "Performers organically call out words, phrases, or ideas inspired by a suggestion.",
+            playerCount: "Ensemble",
+            setupTime: "2-3 minutes"
+        )
+    }
+
+    static var organicOpening: Self {
+        Self(
+            id: "organic_opening",
+            name: "Organic Opening",
+            description: "Improvisers move and speak freely in response to a suggestion.",
+            playerCount: "Ensemble",
+            setupTime: "3-5 minutes"
+        )
+    }
 }
 #endif
