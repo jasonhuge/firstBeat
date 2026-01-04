@@ -287,8 +287,11 @@ struct SessionSummaryCard: View {
     let opening: Opening
     let duration: Int
 
+    @State private var showFormatInfo = false
+    @State private var showOpeningInfo = false
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: Constants.cardSpacing) {
 
             // Suggestion
             if let suggestion = suggestion, !suggestion.isEmpty {
@@ -305,35 +308,37 @@ struct SessionSummaryCard: View {
                     .multilineTextAlignment(.leading)
             }
 
-            // Metadata row
-            HStack(spacing: 16) {
-                Label(format.title, systemImage: "theatermasks")
+            Divider()
 
-                Divider()
-                    .frame(height: 12)
-                Label(opening.name, systemImage: "star.circle")
-
-                Spacer()
-                Label("\(duration) min", systemImage: "clock")
+            // Metadata - Vertical Stack
+            VStack(alignment: .leading, spacing: Constants.metadataSpacing) {
+                MetadataRow(
+                    icon: "theatermasks",
+                    text: format.title,
+                    showInfo: true,
+                    onInfoTap: { showFormatInfo = true }
+                )
+                MetadataRow(
+                    icon: "star.circle",
+                    text: opening.name,
+                    showInfo: true,
+                    onInfoTap: { showOpeningInfo = true }
+                )
+                MetadataRow(
+                    icon: "clock",
+                    text: "\(duration) min",
+                    showInfo: false
+                )
             }
-            .font(.subheadline)
-            .foregroundColor(Color(.secondaryLabel))
 
             Divider()
 
-            // Format description
-            Text(format.description)
-                .font(.body)
-                .foregroundColor(Color(.label))
-
-            // Opening description
-            Text(opening.description)
-                .font(.body)
-                .foregroundColor(Color(.secondaryLabel))
-                .italic()
-
             // Segment breakdown
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: Constants.segmentBreakdownSpacing) {
+                Text("Segments")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+
                 ForEach(format.segments) { segment in
                     HStack {
                         Text(segment.title)
@@ -346,12 +351,125 @@ struct SessionSummaryCard: View {
                 }
             }
         }
-        .padding()
+        .padding(Constants.cardPadding)
         .background(
-            RoundedRectangle(cornerRadius: 20)
+            RoundedRectangle(cornerRadius: Constants.cardCornerRadius)
                 .fill(Color(.secondarySystemBackground))
-                .shadow(color: .black.opacity(0.10), radius: 6, y: 3)
+                .shadow(color: .black.opacity(Constants.cardShadowOpacity), radius: Constants.cardShadowRadius, y: Constants.cardShadowY)
         )
+        .sheet(isPresented: $showFormatInfo) {
+            InfoSheet(
+                title: format.title,
+                description: format.description,
+                icon: "theatermasks"
+            )
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showOpeningInfo) {
+            InfoSheet(
+                title: opening.name,
+                description: opening.description,
+                icon: "star.circle"
+            )
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+        }
+    }
+}
+
+// MARK: - Metadata Row Component
+private struct MetadataRow: View {
+    let icon: String
+    let text: String
+    let showInfo: Bool
+    var onInfoTap: (() -> Void)? = nil
+
+    var body: some View {
+        HStack(spacing: Constants.spacing) {
+            Label {
+                Text(text)
+                    .font(.subheadline)
+            } icon: {
+                Image(systemName: icon)
+                    .frame(width: SessionSummaryCard.Constants.iconWidth)
+            }
+            .foregroundColor(Color(.secondaryLabel))
+
+            if showInfo {
+                Button(action: {
+                    onInfoTap?()
+                }) {
+                    Image(systemName: "info.circle")
+                        .font(.subheadline)
+                        .foregroundColor(Color(.tertiaryLabel))
+                }
+            }
+        }
+    }
+
+    enum Constants {
+        static let spacing: CGFloat = 8
+    }
+}
+
+// MARK: - Info Sheet
+private struct InfoSheet: View {
+    @Environment(\.dismiss) var dismiss
+    let title: String
+    let description: String
+    let icon: String
+
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: Constants.contentSpacing) {
+                    HStack {
+                        Image(systemName: icon)
+                            .font(.largeTitle)
+                            .foregroundColor(AppTheme.practiceColor)
+
+                        Text(title)
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                    }
+                    .padding(.bottom, Constants.titleBottomPadding)
+
+                    Text(description)
+                        .font(.body)
+                        .foregroundColor(Color(.label))
+                }
+                .padding()
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+
+    enum Constants {
+        static let contentSpacing: CGFloat = 16
+        static let titleBottomPadding: CGFloat = 8
+    }
+}
+
+// MARK: - Constants
+extension SessionSummaryCard {
+    enum Constants {
+        static let cardSpacing: CGFloat = 16
+        static let metadataSpacing: CGFloat = 12
+        static let segmentBreakdownSpacing: CGFloat = 8
+        static let cardPadding: CGFloat = 16
+        static let cardCornerRadius: CGFloat = 20
+        static let cardShadowOpacity: CGFloat = 0.10
+        static let cardShadowRadius: CGFloat = 6
+        static let cardShadowY: CGFloat = 3
+        static let iconWidth: CGFloat = 20
     }
 }
 
