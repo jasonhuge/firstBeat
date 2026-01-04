@@ -19,43 +19,47 @@ struct SessionSetupView: View {
     var body: some View {
         VStack(spacing: 0) {
 
-            ScrollView {
-                VStack(spacing: Constants.contentSpacing) {
+            if store.isLoading {
+                LoadingView()
+            } else {
+                ScrollView {
+                    VStack(spacing: Constants.contentSpacing) {
 
-                    SuggestionCard(
-                        suggestion: store.suggestion
-                    )
+                        SuggestionCard(
+                            suggestion: store.suggestion
+                        )
 
-                    if let selectedType = store.selectedType {
-                        FormatTypePills(
-                            formats: store.formats,
-                            selected: selectedType
+                        if let selectedType = store.selectedType {
+                            FormatTypePills(
+                                formats: store.formats,
+                                selected: selectedType
+                            ) {
+                                store.send(.typeSelected($0))
+                            }
+                        }
+
+                        if !store.availableOpenings.isEmpty {
+                            OpeningSection(
+                                openings: store.availableOpenings,
+                                selected: store.selectedOpening
+                            ) {
+                                store.send(.openingSelected($0))
+                            }
+                        }
+
+                        DurationSection(
+                            totalDuration: store.totalDuration
                         ) {
-                            store.send(.typeSelected($0))
+                            store.send(.durationChanged($0))
                         }
                     }
-
-                    if !store.availableOpenings.isEmpty {
-                        OpeningSection(
-                            openings: store.availableOpenings,
-                            selected: store.selectedOpening
-                        ) {
-                            store.send(.openingSelected($0))
-                        }
-                    }
-
-                    DurationSection(
-                        totalDuration: store.totalDuration
-                    ) {
-                        store.send(.durationChanged($0))
-                    }
+                    .padding(.top, Constants.contentTopPadding)
                 }
-                .padding(.top, Constants.contentTopPadding)
-            }
 
-            StartButton {
-                store.send(.startSelected)
-                impactGenerator.impactOccurred()
+                StartButton {
+                    store.send(.startSelected)
+                    impactGenerator.impactOccurred()
+                }
             }
         }
         .navigationTitle("Set the Show")
@@ -468,6 +472,30 @@ extension OpeningPill {
         static let horizontalPadding: CGFloat = 16
         static let cornerRadius: CGFloat = 16
         static let animationDuration: CGFloat = 0.2
+    }
+}
+
+// MARK: - Loading View
+
+struct LoadingView: View {
+    var body: some View {
+        VStack(spacing: Constants.spacing) {
+            ProgressView()
+                .scaleEffect(Constants.progressViewScale)
+            Text("Loading formats...")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+// MARK: - Constants
+
+extension LoadingView {
+    enum Constants {
+        static let spacing: CGFloat = 16
+        static let progressViewScale: CGFloat = 1.5
     }
 }
 

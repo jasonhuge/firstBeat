@@ -22,6 +22,14 @@ struct SessionSetupFeature {
         var selectedOpening: Opening?
         var availableOpenings: [Opening] = []
 
+        // Loading state
+        var isLoadingFormats: Bool = false
+        var isLoadingOpenings: Bool = false
+
+        var isLoading: Bool {
+            isLoadingFormats || isLoadingOpenings
+        }
+
         mutating func updateAvailableOpenings() {
             guard let selectedFormat = selectedType else {
                 availableOpenings = []
@@ -66,6 +74,9 @@ struct SessionSetupFeature {
                     return .none
                 }
 
+                state.isLoadingFormats = true
+                state.isLoadingOpenings = true
+
                 return .run { send in
                     async let formats = formatService.fetchFormats()
                     async let openings = openingService.fetchOpenings()
@@ -76,6 +87,7 @@ struct SessionSetupFeature {
 
             case .formatsLoaded(let formats):
                 state.formats = formats
+                state.isLoadingFormats = false
                 // Only set default selection if nothing is selected
                 if state.selectedType == nil, let firstFormat = formats.first {
                     state.selectedType = firstFormat
@@ -84,6 +96,7 @@ struct SessionSetupFeature {
 
             case .openingsLoaded(let openings):
                 state.openings = openings
+                state.isLoadingOpenings = false
                 state.updateAvailableOpenings()
 
                 // Only auto-select if no opening is currently selected

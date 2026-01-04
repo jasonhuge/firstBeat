@@ -14,70 +14,74 @@ struct WarmUpListView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Category filter pills
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Constants.categoryPillSpacing) {
-                    CategoryPill(
-                        category: nil,
-                        isSelected: store.selectedCategory == nil
-                    ) {
-                        store.send(.categorySelected(nil))
-                    }
-
-                    ForEach(WarmUpCategory.allCases) { category in
+            if store.isLoading {
+                WarmUpLoadingView()
+            } else {
+                // Category filter pills
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: Constants.categoryPillSpacing) {
                         CategoryPill(
-                            category: category,
-                            isSelected: store.selectedCategory == category
+                            category: nil,
+                            isSelected: store.selectedCategory == nil
                         ) {
-                            store.send(.categorySelected(category))
+                            store.send(.categorySelected(nil))
+                        }
+
+                        ForEach(WarmUpCategory.allCases) { category in
+                            CategoryPill(
+                                category: category,
+                                isSelected: store.selectedCategory == category
+                            ) {
+                                store.send(.categorySelected(category))
+                            }
                         }
                     }
+                    .padding(.horizontal, Constants.categoryScrollHorizontalPadding)
+                    .padding(.vertical, Constants.categoryScrollVerticalPadding)
                 }
-                .padding(.horizontal, Constants.categoryScrollHorizontalPadding)
-                .padding(.vertical, Constants.categoryScrollVerticalPadding)
-            }
-            .background(Color(.systemBackground))
+                .background(Color(.systemBackground))
 
-            // Warm-up list
-            List {
-                ForEach(store.filteredWarmUps) { warmUp in
-                    Button {
-                        store.send(.warmUpSelected(warmUp))
-                    } label: {
-                        HStack(spacing: Constants.rowSpacing) {
-                            // Category icon
-                            Image(systemName: warmUp.category.icon)
-                                .font(.system(size: Constants.categoryIconSize))
-                                .foregroundColor(AppTheme.warmUpColor)
-                                .frame(width: Constants.categoryIconFrameWidth)
+                // Warm-up list
+                List {
+                    ForEach(store.filteredWarmUps) { warmUp in
+                        Button {
+                            store.send(.warmUpSelected(warmUp))
+                        } label: {
+                            HStack(spacing: Constants.rowSpacing) {
+                                // Category icon
+                                Image(systemName: warmUp.category.icon)
+                                    .font(.system(size: Constants.categoryIconSize))
+                                    .foregroundColor(AppTheme.warmUpColor)
+                                    .frame(width: Constants.categoryIconFrameWidth)
 
-                            VStack(alignment: .leading, spacing: Constants.textSpacing) {
-                                Text(warmUp.name)
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
+                                VStack(alignment: .leading, spacing: Constants.textSpacing) {
+                                    Text(warmUp.name)
+                                        .font(.headline)
+                                        .foregroundColor(.primary)
 
-                                Text(warmUp.category.rawValue)
-                                    .font(.subheadline)
+                                    Text(warmUp.category.rawValue)
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                }
+
+                                Spacer()
+
+                                if store.completedWarmUps.contains(warmUp.id) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(AppTheme.successColor)
+                                        .font(.system(size: Constants.checkmarkIconSize))
+                                }
+
+                                Image(systemName: "chevron.right")
                                     .foregroundColor(.secondary)
+                                    .font(.system(size: Constants.chevronIconSize))
                             }
-
-                            Spacer()
-
-                            if store.completedWarmUps.contains(warmUp.id) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(AppTheme.successColor)
-                                    .font(.system(size: Constants.checkmarkIconSize))
-                            }
-
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.secondary)
-                                .font(.system(size: Constants.chevronIconSize))
+                            .padding(.vertical, Constants.rowVerticalPadding)
                         }
-                        .padding(.vertical, Constants.rowVerticalPadding)
                     }
                 }
+                .listStyle(.plain)
             }
-            .listStyle(.plain)
         }
         .navigationTitle("Warm-ups")
         .navigationBarTitleDisplayMode(.inline)
@@ -143,6 +147,30 @@ extension CategoryPill {
         static let iconSize: CGFloat = 14
         static let verticalPadding: CGFloat = 8
         static let horizontalPadding: CGFloat = 16
+    }
+}
+
+// MARK: - Loading View
+
+struct WarmUpLoadingView: View {
+    var body: some View {
+        VStack(spacing: Constants.spacing) {
+            ProgressView()
+                .scaleEffect(Constants.progressViewScale)
+            Text("Loading warm-ups...")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+// MARK: - Constants
+
+extension WarmUpLoadingView {
+    enum Constants {
+        static let spacing: CGFloat = 16
+        static let progressViewScale: CGFloat = 1.5
     }
 }
 

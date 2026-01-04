@@ -15,6 +15,7 @@ struct WarmUpListFeature {
         var warmUps: [WarmUp] = []
         var selectedCategory: WarmUpCategory? = nil
         var completedWarmUps: Set<UUID> = []
+        var isLoading: Bool = false
 
         var filteredWarmUps: [WarmUp] {
             guard let category = selectedCategory else { return warmUps }
@@ -36,6 +37,7 @@ struct WarmUpListFeature {
         Reduce { state, action in
             switch action {
             case .onAppear:
+                state.isLoading = true
                 return .run { send in
                     let warmUps = await service.fetchWarmUps()
                     await send(.warmUpsLoaded(warmUps))
@@ -43,6 +45,7 @@ struct WarmUpListFeature {
 
             case .warmUpsLoaded(let warmUps):
                 state.warmUps = warmUps
+                state.isLoading = false
                 return .none
 
             case .categorySelected(let category):
