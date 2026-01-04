@@ -47,8 +47,18 @@ struct HomeView: View {
                 }
             }
         }
-        .navigationTitle("First Beat")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .title) {
+                Image("AppIconImage")
+                    .resizable()
+                    .frame(
+                        width: 44,
+                        height: 44
+                    )
+                    .cornerRadius(12)
+            }
+        }
     }
 }
 
