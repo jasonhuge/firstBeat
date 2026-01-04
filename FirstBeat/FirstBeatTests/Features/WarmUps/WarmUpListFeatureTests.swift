@@ -18,8 +18,9 @@ struct WarmUpListFeatureTests {
 
         #expect(state.warmUps.isEmpty)
         #expect(state.selectedCategory == nil)
-        #expect(state.completedWarmUps.isEmpty)
+        #expect(state.favoriteWarmUpNames.isEmpty)
         #expect(state.filteredWarmUps.isEmpty)
+        #expect(state.favorites.isEmpty)
     }
 
     @Test func onAppearLoadsWarmUps() async {
@@ -43,9 +44,15 @@ struct WarmUpListFeatureTests {
             $0.warmUpService.fetchWarmUps = { mockWarmUps }
         }
 
-        await store.send(.onAppear)
+        await store.send(.onAppear) {
+            $0.isLoading = true
+        }
         await store.receive(.warmUpsLoaded(mockWarmUps)) {
             $0.warmUps = mockWarmUps
+            $0.isLoading = false
+        }
+        await store.receive(.favoritesLoaded([])) {
+            $0.favoriteWarmUpNames = []
         }
     }
 
@@ -143,8 +150,8 @@ struct WarmUpListFeatureTests {
         await store.send(.warmUpSelected(warmUp))
     }
 
-    @Test func toggleCompletedTogglesCompletion() async {
-        let warmUpId = UUID()
+    @Test func toggleFavoriteTogglesFavoriteStatus() async {
+        let warmUpName = "Zip Zap Zop"
 
         let store = TestStore(
             initialState: WarmUpListFeature.State()
@@ -152,18 +159,18 @@ struct WarmUpListFeatureTests {
             WarmUpListFeature()
         }
 
-        // Mark as completed
-        await store.send(.toggleCompleted(warmUpId)) {
-            $0.completedWarmUps.insert(warmUpId)
+        // Mark as favorite
+        await store.send(.toggleFavorite(warmUpName)) {
+            $0.favoriteWarmUpNames.insert(warmUpName)
         }
 
-        #expect(store.state.completedWarmUps.contains(warmUpId))
+        #expect(store.state.favoriteWarmUpNames.contains(warmUpName))
 
-        // Unmark as completed
-        await store.send(.toggleCompleted(warmUpId)) {
-            $0.completedWarmUps.remove(warmUpId)
+        // Unmark as favorite
+        await store.send(.toggleFavorite(warmUpName)) {
+            $0.favoriteWarmUpNames.remove(warmUpName)
         }
 
-        #expect(!store.state.completedWarmUps.contains(warmUpId))
+        #expect(!store.state.favoriteWarmUpNames.contains(warmUpName))
     }
 }

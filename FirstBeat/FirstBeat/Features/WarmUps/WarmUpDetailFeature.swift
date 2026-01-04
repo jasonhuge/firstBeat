@@ -13,18 +13,40 @@ struct WarmUpDetailFeature {
     @ObservableState
     struct State: Equatable {
         let warmUp: WarmUp
-        var isCompleted: Bool = false
+        var isFavorite: Bool = false
     }
 
     enum Action: Equatable {
-        case toggleCompleted
+        case toggleFavorite
+        case delegate(Delegate)
+
+        @CasePathable
+        enum Delegate: Equatable {
+            case favoriteToggled(String, Bool)
+        }
     }
+
+    @Dependency(\.favoritesService) var favoritesService
 
     var body: some Reducer<State, Action> {
         Reduce { state, action in
             switch action {
-            case .toggleCompleted:
-                state.isCompleted.toggle()
+            case .toggleFavorite:
+                state.isFavorite.toggle()
+
+                let warmUpName = state.warmUp.name
+                let newValue = state.isFavorite
+
+                return .run { send in
+                    if newValue {
+                        try? await favoritesService.addFavorite(warmUpName)
+                    } else {
+                        try? await favoritesService.removeFavorite(warmUpName)
+                    }
+                    await send(.delegate(.favoriteToggled(warmUpName, newValue)))
+                }
+
+            case .delegate:
                 return .none
             }
         }

@@ -122,8 +122,30 @@ struct AppFeature {
                 return .none
 
             // MARK: Warm-up List → Warm-up Detail
-            case .path(.element(id: _, action: .warmUpList(.warmUpSelected(let warmUp)))):
-                state.path.append(.warmUpDetail(WarmUpDetailFeature.State(warmUp: warmUp)))
+            case .path(.element(id: let id, action: .warmUpList(.warmUpSelected(let warmUp)))):
+                guard case .warmUpList(let warmUpListState) = state.path[id: id] else {
+                    return .none
+                }
+                let isFavorite = warmUpListState.favoriteWarmUpNames.contains(warmUp.name)
+                state.path.append(.warmUpDetail(WarmUpDetailFeature.State(
+                    warmUp: warmUp,
+                    isFavorite: isFavorite
+                )))
+                return .none
+
+            // MARK: Warm-up Detail → Sync favorite state back to list
+            case .path(.element(id: _, action: .warmUpDetail(.delegate(.favoriteToggled(let name, let isFavorite))))):
+                // Find the warm-up list in the path to sync the favorite state
+                for pathID in state.path.ids {
+                    if case .warmUpList(var warmUpListState) = state.path[id: pathID] {
+                        if isFavorite {
+                            warmUpListState.favoriteWarmUpNames.insert(name)
+                        } else {
+                            warmUpListState.favoriteWarmUpNames.remove(name)
+                        }
+                        state.path[id: pathID] = .warmUpList(warmUpListState)
+                    }
+                }
                 return .none
 
             // MARK: No-ops

@@ -43,40 +43,33 @@ struct WarmUpListView: View {
 
                 // Warm-up list
                 List {
-                    ForEach(store.filteredWarmUps) { warmUp in
-                        Button {
-                            store.send(.warmUpSelected(warmUp))
-                        } label: {
-                            HStack(spacing: Constants.rowSpacing) {
-                                // Category icon
-                                Image(systemName: warmUp.category.icon)
-                                    .font(.system(size: Constants.categoryIconSize))
-                                    .foregroundColor(AppTheme.warmUpColor)
-                                    .frame(width: Constants.categoryIconFrameWidth)
-
-                                VStack(alignment: .leading, spacing: Constants.textSpacing) {
-                                    Text(warmUp.name)
-                                        .font(.headline)
-                                        .foregroundColor(.primary)
-
-                                    Text(warmUp.category.rawValue)
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                }
-
-                                Spacer()
-
-                                if store.completedWarmUps.contains(warmUp.id) {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundColor(AppTheme.successColor)
-                                        .font(.system(size: Constants.checkmarkIconSize))
-                                }
-
-                                Image(systemName: "chevron.right")
-                                    .foregroundColor(.secondary)
-                                    .font(.system(size: Constants.chevronIconSize))
+                    // Favorites section
+                    if !store.favorites.isEmpty {
+                        Section {
+                            ForEach(store.favorites) { warmUp in
+                                WarmUpRow(
+                                    warmUp: warmUp,
+                                    isFavorite: true,
+                                    onSelect: { store.send(.warmUpSelected(warmUp)) }
+                                )
                             }
-                            .padding(.vertical, Constants.rowVerticalPadding)
+                        } header: {
+                            SectionHeaderView(title: "Favorites")
+                        }
+                    }
+
+                    // All warm-ups section
+                    Section {
+                        ForEach(store.filteredWarmUps) { warmUp in
+                            WarmUpRow(
+                                warmUp: warmUp,
+                                isFavorite: store.favoriteWarmUpNames.contains(warmUp.name),
+                                onSelect: { store.send(.warmUpSelected(warmUp)) }
+                            )
+                        }
+                    } header: {
+                        if !store.favorites.isEmpty {
+                            SectionHeaderView(title: "All Warm-ups")
                         }
                     }
                 }
@@ -98,13 +91,87 @@ extension WarmUpListView {
         static let categoryPillSpacing: CGFloat = 12
         static let categoryScrollHorizontalPadding: CGFloat = 16
         static let categoryScrollVerticalPadding: CGFloat = 12
+    }
+}
+
+// MARK: - Warm-Up Row
+
+struct WarmUpRow: View {
+    let warmUp: WarmUp
+    let isFavorite: Bool
+    let onSelect: () -> Void
+
+    var body: some View {
+        Button(action: onSelect) {
+            HStack(spacing: Constants.rowSpacing) {
+                // Category icon
+                Image(systemName: warmUp.category.icon)
+                    .font(.system(size: Constants.categoryIconSize))
+                    .foregroundColor(AppTheme.warmUpColor)
+                    .frame(width: Constants.categoryIconFrameWidth)
+
+                VStack(alignment: .leading, spacing: Constants.textSpacing) {
+                    Text(warmUp.name)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+
+                    Text(warmUp.category.rawValue)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                if isFavorite {
+                    Image(systemName: "star.fill")
+                        .foregroundColor(AppTheme.warmUpColor)
+                        .font(.system(size: Constants.starIconSize))
+                }
+
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.secondary)
+                    .font(.system(size: Constants.chevronIconSize))
+            }
+            .padding(.vertical, Constants.rowVerticalPadding)
+        }
+    }
+}
+
+// MARK: - Constants
+
+extension WarmUpRow {
+    enum Constants {
         static let rowSpacing: CGFloat = 12
         static let categoryIconSize: CGFloat = 20
         static let categoryIconFrameWidth: CGFloat = 30
         static let textSpacing: CGFloat = 4
-        static let checkmarkIconSize: CGFloat = 20
+        static let starIconSize: CGFloat = 20
         static let chevronIconSize: CGFloat = 14
         static let rowVerticalPadding: CGFloat = 4
+    }
+}
+
+// MARK: - Section Header
+
+struct SectionHeaderView: View {
+    let title: String
+
+    var body: some View {
+        Text(title)
+            .font(.headline)
+            .foregroundColor(.primary)
+            .textCase(nil)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, Constants.horizontalPadding)
+            .padding(.vertical, Constants.verticalPadding)
+            .background(Color(.systemBackground))
+    }
+}
+
+extension SectionHeaderView {
+    enum Constants {
+        static let horizontalPadding: CGFloat = 16
+        static let verticalPadding: CGFloat = 8
     }
 }
 

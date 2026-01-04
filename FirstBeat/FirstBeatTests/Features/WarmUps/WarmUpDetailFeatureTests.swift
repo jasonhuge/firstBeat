@@ -28,10 +28,10 @@ struct WarmUpDetailFeatureTests {
 
         #expect(state.warmUp.name == "Test Warm-up")
         #expect(state.warmUp.category == .physical)
-        #expect(state.isCompleted == false)
+        #expect(state.isFavorite == false)
     }
 
-    @Test func toggleCompletedMarksAsCompleted() async {
+    @Test func toggleFavoriteMarksAsFavorite() async {
         let warmUp = WarmUp(
             id: UUID(),
             name: "Test Warm-up",
@@ -48,12 +48,12 @@ struct WarmUpDetailFeatureTests {
             WarmUpDetailFeature()
         }
 
-        await store.send(.toggleCompleted) {
-            $0.isCompleted = true
+        await store.send(.toggleFavorite) {
+            $0.isFavorite = true
         }
     }
 
-    @Test func toggleCompletedUnmarksAsCompleted() async {
+    @Test func toggleFavoriteUnmarksAsFavorite() async {
         let warmUp = WarmUp(
             id: UUID(),
             name: "Test Warm-up",
@@ -67,14 +67,14 @@ struct WarmUpDetailFeatureTests {
         let store = TestStore(
             initialState: WarmUpDetailFeature.State(
                 warmUp: warmUp,
-                isCompleted: true
+                isFavorite: true
             )
         ) {
             WarmUpDetailFeature()
         }
 
-        await store.send(.toggleCompleted) {
-            $0.isCompleted = false
+        await store.send(.toggleFavorite) {
+            $0.isFavorite = false
         }
     }
 }

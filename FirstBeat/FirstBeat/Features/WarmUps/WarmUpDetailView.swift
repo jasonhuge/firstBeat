@@ -62,31 +62,22 @@ struct WarmUpDetailView: View {
                         }
                     }
                 }
-
-                // Mark as done button
-                Button {
-                    HapticFeedback.medium()
-                    store.send(.toggleCompleted)
-                } label: {
-                    HStack {
-                        Image(systemName: store.isCompleted ? "checkmark.circle.fill" : "circle")
-                        Text(store.isCompleted ? "Completed" : "Mark as Done")
-                    }
-                    .font(.headline)
-                    .foregroundColor(store.isCompleted ? .white : AppTheme.warmUpColor)
-                    .frame(maxWidth: .infinity)
-                    .padding(Constants.buttonPadding)
-                    .background(
-                        RoundedRectangle(cornerRadius: Constants.buttonCornerRadius)
-                            .fill(store.isCompleted ? AppTheme.successColor : AppTheme.warmUpColor.opacity(Constants.buttonBackgroundOpacity))
-                    )
-                }
-                .padding(.top, Constants.buttonTopPadding)
             }
             .padding(Constants.containerPadding)
         }
         .navigationTitle(store.warmUp.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    HapticFeedback.medium()
+                    store.send(.toggleFavorite)
+                } label: {
+                    Image(systemName: store.isFavorite ? "star.fill" : "star")
+                        .foregroundColor(AppTheme.warmUpColor)
+                }
+            }
+        }
     }
 }
 
@@ -99,10 +90,6 @@ extension WarmUpDetailView {
         static let badgeTopPadding: CGFloat = 8
         static let listItemSpacing: CGFloat = 8
         static let listItemContentSpacing: CGFloat = 8
-        static let buttonPadding: CGFloat = 16
-        static let buttonCornerRadius: CGFloat = 16
-        static let buttonBackgroundOpacity: CGFloat = 0.1
-        static let buttonTopPadding: CGFloat = 8
         static let containerPadding: CGFloat = 16
     }
 }
