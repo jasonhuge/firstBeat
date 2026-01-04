@@ -65,9 +65,7 @@ struct WarmUpDetailView: View {
 
                 // Mark as done button
                 Button {
-                    let generator = UIImpactFeedbackGenerator(style: .medium)
-                    generator.prepare()
-                    generator.impactOccurred()
+                    HapticFeedback.medium()
                     store.send(.toggleCompleted)
                 } label: {
                     HStack {

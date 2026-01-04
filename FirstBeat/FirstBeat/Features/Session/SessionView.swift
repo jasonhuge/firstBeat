@@ -16,7 +16,6 @@ struct SessionView: View {
 
     @State private var showConfetti: Bool = false
     @State private var pulse: Bool = false
-    @State private var impactGenerator = UIImpactFeedbackGenerator(style: .medium)
 
     var body: some View {
         GeometryReader { geo in
@@ -83,9 +82,6 @@ struct SessionView: View {
                     }
                 }
             }
-            .onAppear {
-                impactGenerator.prepare()
-            }
             .onChange(of: store.timerRunning) { _, newValue in
                 UIApplication.shared.isIdleTimerDisabled = newValue
             }
@@ -148,8 +144,7 @@ extension SessionView {
 
     private var playPauseButton: some View {
         Button {
-            // Haptic feedback for button press
-            impactGenerator.impactOccurred()
+            HapticFeedback.medium()
             withAnimation {
                 _ = store.send(.togglePlayPause)
             }
@@ -175,8 +170,7 @@ extension SessionView {
 
     private var toolbarPlayPauseButton: some View {
         Button {
-            // Haptic feedback for button press
-            impactGenerator.impactOccurred()
+            HapticFeedback.medium()
             withAnimation {
                 _ = store.send(.togglePlayPause)
             }

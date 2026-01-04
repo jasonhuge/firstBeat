@@ -87,8 +87,6 @@ struct HomeCardView: View {
     let isLandscape: Bool
     let action: () -> Void
 
-    @State private var hapticGenerator = UIImpactFeedbackGenerator(style: .medium)
-
     var body: some View {
         GeometryReader { geometry in
             VStack(spacing: 0) {
@@ -97,7 +95,7 @@ struct HomeCardView: View {
                 }
 
                 Button(action: {
-                    hapticGenerator.impactOccurred()
+                    HapticFeedback.medium()
                     action()
                 }) {
                     VStack(spacing: 0) {
@@ -144,9 +142,6 @@ struct HomeCardView: View {
                 }
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
-        }
-        .onAppear {
-            hapticGenerator.prepare()
         }
     }
 }

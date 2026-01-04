@@ -19,11 +19,9 @@ struct OptionCard: View {
     let model: OptionCardModel
     let action: () -> Void
 
-    @State private var hapticGenerator = UIImpactFeedbackGenerator(style: .medium)
-
     var body: some View {
         Button(action: {
-            hapticGenerator.impactOccurred()
+            HapticFeedback.medium()
             action()
         }) {
             HStack(spacing: Constants.contentSpacing) {
@@ -57,9 +55,6 @@ struct OptionCard: View {
                     .fill(Color(.secondarySystemBackground))
                     .shadow(color: .black.opacity(Constants.shadowOpacity), radius: Constants.shadowRadius, y: Constants.shadowY)
             )
-        }
-        .onAppear {
-            hapticGenerator.prepare()
         }
     }
 }

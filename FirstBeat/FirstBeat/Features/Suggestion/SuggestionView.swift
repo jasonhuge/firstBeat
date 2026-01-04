@@ -16,9 +16,6 @@ struct SuggestionView: View {
     @FocusState
     private var isTextFieldFocused: Bool
 
-    @State
-    private var impactGenerator = UIImpactFeedbackGenerator(style: .medium)
-
     var body: some View {
         VStack(spacing: 0) {
             makeContent()
@@ -37,9 +34,6 @@ struct SuggestionView: View {
         }
         .navigationTitle("AI Suggestion")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            impactGenerator.prepare()
-        }
     }
 }
 
@@ -180,9 +174,8 @@ extension SuggestionView {
                             )
                         } else {
                             Button {
-                                // Send action first, then haptic feedback
                                 store.send(.suggestionSelected(suggestion))
-                                impactGenerator.impactOccurred()
+                                HapticFeedback.medium()
                             } label: {
                                 HStack {
                                     Text(suggestion)
@@ -232,7 +225,7 @@ extension SuggestionView {
             Button {
                 isTextFieldFocused = false
                 store.send(.sendSuggestionTapped)
-                impactGenerator.impactOccurred()
+                HapticFeedback.medium()
             } label: {
                 Image(systemName: "arrow.up")
                     .foregroundColor(.white)

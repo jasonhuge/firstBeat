@@ -13,9 +13,6 @@ struct SessionSetupView: View {
     @Bindable
     var store: StoreOf<SessionSetupFeature>
 
-    @State
-    private var impactGenerator = UIImpactFeedbackGenerator(style: .medium)
-
     var body: some View {
         VStack(spacing: 0) {
 
@@ -58,14 +55,13 @@ struct SessionSetupView: View {
 
                 StartButton {
                     store.send(.startSelected)
-                    impactGenerator.impactOccurred()
+                    HapticFeedback.medium()
                 }
             }
         }
         .navigationTitle("Set the Show")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
-            impactGenerator.prepare()
             store.send(.onAppear)
         }
     }
@@ -236,7 +232,10 @@ struct FormatPillButton: View {
                     .lineLimit(1)
             }
 
-            Button(action: onInfo) {
+            Button(action: {
+                HapticFeedback.light()
+                onInfo()
+            }) {
                 Image(systemName: "info.circle")
                     .font(.system(size: Constants.iconSize))
             }
@@ -372,7 +371,6 @@ struct DurationCard: View {
 
     @State private var lastValue: Int = 0
     @State private var animateTick: Bool = false
-    private let feedback = UISelectionFeedbackGenerator()
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.outerSpacing) {
@@ -399,7 +397,7 @@ struct DurationCard: View {
                         let intValue = Int(newValue)
 
                         if intValue != lastValue {
-                            feedback.selectionChanged()
+                            HapticFeedback.selection()
                             playTick()
                             lastValue = intValue
                             animateTick.toggle()
@@ -421,7 +419,6 @@ struct DurationCard: View {
         )
         .padding(.horizontal, Constants.horizontalPadding)
         .onAppear {
-            feedback.prepare()
             lastValue = totalDuration
         }
     }
@@ -560,7 +557,10 @@ struct OpeningPill: View {
                     .lineLimit(1)
             }
 
-            Button(action: onInfo) {
+            Button(action: {
+                HapticFeedback.light()
+                onInfo()
+            }) {
                 Image(systemName: "info.circle")
                     .font(.system(size: Constants.iconSize))
             }
