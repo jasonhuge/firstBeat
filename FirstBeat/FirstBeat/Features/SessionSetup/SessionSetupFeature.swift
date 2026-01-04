@@ -61,6 +61,11 @@ struct SessionSetupFeature {
         Reduce { state, action in
             switch action {
             case .onAppear:
+                // Only load data if not already loaded (preserve state on navigation back)
+                guard state.formats.isEmpty else {
+                    return .none
+                }
+
                 return .run { send in
                     async let formats = formatService.fetchFormats()
                     async let openings = openingService.fetchOpenings()
@@ -71,7 +76,8 @@ struct SessionSetupFeature {
 
             case .formatsLoaded(let formats):
                 state.formats = formats
-                if let firstFormat = formats.first {
+                // Only set default selection if nothing is selected
+                if state.selectedType == nil, let firstFormat = formats.first {
                     state.selectedType = firstFormat
                 }
                 return .none
@@ -80,12 +86,15 @@ struct SessionSetupFeature {
                 state.openings = openings
                 state.updateAvailableOpenings()
 
-                // Auto-select required opening, or preferred opening if no required
-                if let selectedFormat = state.selectedType {
-                    if let requiredId = selectedFormat.requiredOpeningId {
-                        state.selectedOpening = state.openings.first { $0.id == requiredId }
-                    } else if let preferredId = selectedFormat.preferredOpeningId {
-                        state.selectedOpening = state.openings.first { $0.id == preferredId }
+                // Only auto-select if no opening is currently selected
+                if state.selectedOpening == nil {
+                    // Auto-select required opening, or preferred opening if no required
+                    if let selectedFormat = state.selectedType {
+                        if let requiredId = selectedFormat.requiredOpeningId {
+                            state.selectedOpening = state.openings.first { $0.id == requiredId }
+                        } else if let preferredId = selectedFormat.preferredOpeningId {
+                            state.selectedOpening = state.openings.first { $0.id == preferredId }
+                        }
                     }
                 }
                 return .none

@@ -46,12 +46,11 @@ struct SuggestionFeatureTests {
             }
         }
 
-        store.exhaustivity = .off
+        store.exhaustivity = .off(showSkippedAssertions: false)
 
         await store.send(.sendSuggestionTapped) {
             $0.textInput = ""
             $0.isFetching = true
-            $0.conversations.count == 1
         }
 
         // Verify the conversation was created correctly
