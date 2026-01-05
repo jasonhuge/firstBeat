@@ -233,6 +233,7 @@ extension SessionView {
                     }
                     .frame(height: Constants.progressBarHeight)
                 }
+                .padding()
                 .onChange(of: store.currentSegmentIndex) { _, _ in
                     playSegmentChime()
                 }
