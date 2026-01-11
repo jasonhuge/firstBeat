@@ -32,6 +32,10 @@ struct AppView: View {
                 if let store = store.scope(state: \.suggestion, action: \.suggestion) {
                     SuggestionView(store: store)
                 }
+            case .randomSuggestion:
+                if let store = store.scope(state: \.randomSuggestion, action: \.randomSuggestion) {
+                    RandomSuggestionView(store: store)
+                }
             case .practiceSetup:
                 if let store = store.scope(state: \.practiceSetup, action: \.practiceSetup) {
                     SessionSetupView(store: store)

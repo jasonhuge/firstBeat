@@ -26,7 +26,10 @@ struct SuggestionFeature {
     }
 
     @Dependency(\.suggestionService)
-    var service
+    var suggestionService
+
+    @Dependency(\.usedSuggestionsService)
+    var usedSuggestionsService
 
     var body: some Reducer<State, Action> {
         BindingReducer()
@@ -35,9 +38,9 @@ struct SuggestionFeature {
             switch action {
             case .binding:
                 return .none
+
             case .sendSuggestionTapped:
                 let input = state.textInput
-
                 guard !input.isEmpty else { return .none }
 
                 state.isFetching = true
@@ -53,7 +56,7 @@ struct SuggestionFeature {
                 }
 
                 return .run { send in
-                    for try await content in await service.fetchSuggestions(input) {
+                    for try await content in await suggestionService.fetchSuggestions(input) {
                         await send(.conversationReceived(id: conversation.id, content: content))
                     }
                 }
@@ -71,10 +74,13 @@ struct SuggestionFeature {
                 state.conversations = []
                 state.isFetching = false
                 return .none
-            case .suggestionSelected:
-                return .none
+
+            case .suggestionSelected(let suggestion):
+                // Mark as used
+                return .run { _ in
+                    await usedSuggestionsService.markAIUsed(suggestion)
+                }
             }
         }
     }
 }
-

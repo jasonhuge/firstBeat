@@ -57,6 +57,15 @@ struct WarmUpsRequest: RemoteConfigRequest {
     let bundleFilename = "warmups"
 }
 
+struct SuggestionsRequest: RemoteConfigRequest {
+    typealias ResponseModel = SuggestionsResponse
+
+    let baseURL = RemoteConfigConstants.baseURL
+    let endpoint = "\(RemoteConfigConstants.jsonPath)suggestions.json"
+    let cacheFilename = "suggestions.json"
+    let bundleFilename = "suggestions"
+}
+
 /// Service for loading JSON configuration from remote sources with caching
 ///
 /// Features:

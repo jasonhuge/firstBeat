@@ -21,20 +21,28 @@ struct PracticeEntryView: View {
                     .multilineTextAlignment(.center)
                     .padding(.top, Constants.titleTopPadding)
 
-                VStack(spacing: Constants.cardSpacing) {
-                    ForEach(store.state.options) { model in
-                        OptionCard(model: model) {
-                            store.send(.optionSelected(id: model.id))
+                if store.isCheckingAvailability {
+                    ProgressView()
+                        .padding(.top, 40)
+                } else {
+                    VStack(spacing: Constants.cardSpacing) {
+                        ForEach(store.options) { model in
+                            OptionCard(model: model) {
+                                store.send(.optionSelected(id: model.id))
+                            }
                         }
                     }
+                    .padding(.horizontal)
                 }
-                .padding(.horizontal)
 
                 Spacer()
             }
         }
         .navigationTitle("Practice")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            store.send(.onAppear)
+        }
     }
 }
 

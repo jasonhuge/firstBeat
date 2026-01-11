@@ -34,6 +34,7 @@ struct AppFeature {
         enum State: Equatable {
             case practiceEntry(PracticeEntryFeature.State)
             case suggestion(SuggestionFeature.State)
+            case randomSuggestion(RandomSuggestionFeature.State)
             case practiceSetup(SessionSetupFeature.State)
             case practiceSession(SessionFeature.State)
             case warmUpList(WarmUpListFeature.State)
@@ -43,6 +44,7 @@ struct AppFeature {
         enum Action: Equatable {
             case practiceEntry(PracticeEntryFeature.Action)
             case suggestion(SuggestionFeature.Action)
+            case randomSuggestion(RandomSuggestionFeature.Action)
             case practiceSetup(SessionSetupFeature.Action)
             case practiceSession(SessionFeature.Action)
             case warmUpList(WarmUpListFeature.Action)
@@ -56,6 +58,10 @@ struct AppFeature {
 
             Scope(state: \.suggestion, action: \.suggestion) {
                 SuggestionFeature()
+            }
+
+            Scope(state: \.randomSuggestion, action: \.randomSuggestion) {
+                RandomSuggestionFeature()
             }
 
             Scope(state: \.practiceSetup, action: \.practiceSetup) {
@@ -101,13 +107,23 @@ struct AppFeature {
                 state.path.append(.suggestion(SuggestionFeature.State()))
                 return .none
 
+            // MARK: Practice Entry → Random Suggestion
+            case .path(.element(id: _, action: .practiceEntry(.delegate(.getRandomSuggestion)))):
+                state.path.append(.randomSuggestion(RandomSuggestionFeature.State()))
+                return .none
+
             // MARK: Practice Entry → Direct Setup (no suggestion)
             case .path(.element(id: _, action: .practiceEntry(.delegate(.startPractice)))):
                 state.path.append(.practiceSetup(SessionSetupFeature.State(suggestion: nil)))
                 return .none
 
-            // MARK: Suggestion → Practice Setup (with suggestion)
+            // MARK: AI Suggestion → Practice Setup (with suggestion)
             case .path(.element(id: _, action: .suggestion(.suggestionSelected(let suggestion)))):
+                state.path.append(.practiceSetup(SessionSetupFeature.State(suggestion: suggestion)))
+                return .none
+
+            // MARK: Random Suggestion → Practice Setup (with suggestion)
+            case .path(.element(id: _, action: .randomSuggestion(.suggestionSelected(let suggestion)))):
                 state.path.append(.practiceSetup(SessionSetupFeature.State(suggestion: suggestion)))
                 return .none
 
