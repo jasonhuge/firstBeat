@@ -18,6 +18,10 @@ struct SessionSetupView: View {
 
             if store.isLoading {
                 LoadingView()
+            } else if store.hasError {
+                ErrorView(message: store.errorMessage) {
+                    store.send(.retryTapped)
+                }
             } else {
                 ScrollView {
                     VStack(spacing: Constants.contentSpacing) {
@@ -385,7 +389,7 @@ struct DurationCard: View {
                     .opacity(animateTick ? Constants.animateOpacity : 1.0)
                     .animation(.easeOut(duration: Constants.animationDuration), value: animateTick)
 
-                Text(durationDescriptor)
+                Text(totalDuration.durationDescriptor)
                     .font(.subheadline)
                     .foregroundColor(Color(.secondaryLabel))
             }
@@ -425,17 +429,6 @@ struct DurationCard: View {
 
     private func playTick() {
         AudioServicesPlaySystemSound(1104)
-    }
-
-    private var durationDescriptor: String {
-        switch totalDuration {
-        case 5...15:
-            return "Short set — quick and punchy"
-        case 20...35:
-            return "Medium set — find the game"
-        default:
-            return "Long set — let it breathe"
-        }
     }
 }
 

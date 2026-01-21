@@ -9,7 +9,7 @@ import Dependencies
 import Foundation
 
 struct WarmUpService {
-    var fetchWarmUps: () async -> [WarmUp]
+    var fetchWarmUps: () async throws -> [WarmUp]
 }
 
 // MARK: - DependencyKey
@@ -17,19 +17,37 @@ struct WarmUpService {
 extension WarmUpService: DependencyKey {
     static var liveValue: WarmUpService {
         Self {
-            await RemoteConfigService.load(WarmUpsRequest()) ?? []
+            async let dataTask = RemoteConfigService.load(WarmUpsDataRequest())
+            async let translationsTask = RemoteConfigService.load(WarmUpsTranslationRequest())
+
+            let (data, translations) = try await (dataTask, translationsTask)
+
+            return data.compactMap { warmUpData in
+                guard let translation = translations[warmUpData.id] else { return nil }
+                return WarmUp.merge(data: warmUpData, translation: translation)
+            }
         }
     }
 
     static var testValue: WarmUpService {
         Self {
-            JSONLoader.load([WarmUp].self, filename: "warmups") ?? []
+            [WarmUp(
+                name: "Test Warm-up",
+                category: .physical,
+                description: "A test warm-up",
+                howToPlay: "Test instructions"
+            )]
         }
     }
 
     static var previewValue: WarmUpService {
         Self {
-            JSONLoader.load([WarmUp].self, filename: "warmups") ?? []
+            [WarmUp(
+                name: "Preview Warm-up",
+                category: .physical,
+                description: "A preview warm-up",
+                howToPlay: "Preview instructions"
+            )]
         }
     }
 }

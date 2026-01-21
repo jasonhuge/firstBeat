@@ -57,7 +57,13 @@ extension DependencyValues {
 
 @ModelActor
 private actor LiveFavoritesStore {
-    private static let modelContainer = try! ModelContainer(for: WarmUpFavorite.self)
+    private static let modelContainer: ModelContainer = {
+        do {
+            return try ModelContainer(for: WarmUpFavorite.self)
+        } catch {
+            fatalError("Failed to create WarmUpFavorite model container: \(error.localizedDescription)")
+        }
+    }()
     static let shared = LiveFavoritesStore(modelContainer: modelContainer)
 
     func addFavorite(_ name: String) throws {

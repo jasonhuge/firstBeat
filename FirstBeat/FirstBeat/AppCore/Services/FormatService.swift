@@ -9,7 +9,7 @@ import Dependencies
 import Foundation
 
 struct FormatService {
-    var fetchFormats: () async -> [FormatType]
+    var fetchFormats: () async throws -> [FormatType]
 }
 
 // MARK: - DependencyKey
@@ -17,19 +17,27 @@ struct FormatService {
 extension FormatService: DependencyKey {
     static var liveValue: FormatService {
         Self {
-            await RemoteConfigService.load(FormatsRequest()) ?? []
+            async let dataTask = RemoteConfigService.load(FormatsDataRequest())
+            async let translationsTask = RemoteConfigService.load(FormatsTranslationRequest())
+
+            let (data, translations) = try await (dataTask, translationsTask)
+
+            return data.compactMap { formatData in
+                guard let translation = translations[formatData.id] else { return nil }
+                return FormatType.merge(data: formatData, translation: translation)
+            }
         }
     }
 
     static var testValue: FormatService {
         Self {
-            JSONLoader.load([FormatType].self, filename: "formats") ?? []
+            [FormatType.mock]
         }
     }
 
     static var previewValue: FormatService {
         Self {
-            JSONLoader.load([FormatType].self, filename: "formats") ?? []
+            [FormatType.mock]
         }
     }
 }

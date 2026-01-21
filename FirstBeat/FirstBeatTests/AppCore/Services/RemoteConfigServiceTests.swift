@@ -12,155 +12,68 @@ import Testing
 @MainActor
 struct RemoteConfigServiceTests {
 
-    // MARK: - Cache Status Tests
+    // MARK: - Data Request Configuration Tests
 
-    @Test func cacheStatusNotCached() {
-        // Clear cache first
-        RemoteConfigService.clearCache(for: FormatsRequest())
-
-        let status = RemoteConfigService.cacheStatus(for: FormatsRequest())
-
-        #expect(status.isValid == false)
-        if case .notCached = status {
-            // Success
-        } else {
-            Issue.record("Expected .notCached status")
-        }
-    }
-
-    @Test func cacheStatusValid() async {
-        // Clear cache first
-        RemoteConfigService.clearCache(for: FormatsRequest())
-
-        // Load data to populate cache
-        _ = await RemoteConfigService.load(FormatsRequest())
-
-        let status = RemoteConfigService.cacheStatus(for: FormatsRequest())
-
-        if case .valid(let cachedAt, let expiresAt) = status {
-            #expect(cachedAt <= Date())
-            #expect(expiresAt > Date())
-            #expect(status.isValid == true)
-        } else {
-            Issue.record("Expected .valid status after loading")
-        }
-
-        // Cleanup
-        RemoteConfigService.clearCache(for: FormatsRequest())
-    }
-
-    // MARK: - Clear Cache Tests
-
-    @Test func clearCacheRemovesData() async {
-        // Load data to populate cache
-        _ = await RemoteConfigService.load(OpeningsRequest())
-
-        // Verify cache exists
-        var status = RemoteConfigService.cacheStatus(for: OpeningsRequest())
-        #expect(status.isValid == true)
-
-        // Clear cache
-        RemoteConfigService.clearCache(for: OpeningsRequest())
-
-        // Verify cache is gone
-        status = RemoteConfigService.cacheStatus(for: OpeningsRequest())
-        if case .notCached = status {
-            // Success
-        } else {
-            Issue.record("Expected .notCached after clearing cache")
-        }
-    }
-
-    @Test func clearAllCacheRemovesAllData() async {
-        // Load multiple types
-        _ = await RemoteConfigService.load(FormatsRequest())
-        _ = await RemoteConfigService.load(OpeningsRequest())
-        _ = await RemoteConfigService.load(WarmUpsRequest())
-
-        // Clear all
-        RemoteConfigService.clearAllCache()
-
-        // Verify all are gone
-        let formatStatus = RemoteConfigService.cacheStatus(for: FormatsRequest())
-        let openingStatus = RemoteConfigService.cacheStatus(for: OpeningsRequest())
-        let warmUpStatus = RemoteConfigService.cacheStatus(for: WarmUpsRequest())
-
-        if case .notCached = formatStatus,
-           case .notCached = openingStatus,
-           case .notCached = warmUpStatus {
-            // Success
-        } else {
-            Issue.record("Expected all caches to be cleared")
-        }
-    }
-
-    // MARK: - Request Tests
-
-    @Test func formatsRequestConfiguration() {
-        let request = FormatsRequest()
+    @Test func formatsDataRequestConfiguration() {
+        let request = FormatsDataRequest()
 
         #expect(request.baseURL == RemoteConfigConstants.baseURL)
-        #expect(request.endpoint.contains("json/formats.json"))
-        #expect(request.cacheFilename == "formats.json")
-        #expect(request.bundleFilename == "formats")
+        #expect(request.endpoint == "json/data/formats.json")
     }
 
-    @Test func openingsRequestConfiguration() {
-        let request = OpeningsRequest()
+    @Test func openingsDataRequestConfiguration() {
+        let request = OpeningsDataRequest()
 
         #expect(request.baseURL == RemoteConfigConstants.baseURL)
-        #expect(request.endpoint.contains("json/openings.json"))
-        #expect(request.cacheFilename == "openings.json")
-        #expect(request.bundleFilename == "openings")
+        #expect(request.endpoint == "json/data/openings.json")
     }
 
-    @Test func warmUpsRequestConfiguration() {
-        let request = WarmUpsRequest()
+    @Test func warmUpsDataRequestConfiguration() {
+        let request = WarmUpsDataRequest()
 
         #expect(request.baseURL == RemoteConfigConstants.baseURL)
-        #expect(request.endpoint.contains("json/warmups.json"))
-        #expect(request.cacheFilename == "warmups.json")
-        #expect(request.bundleFilename == "warmups")
+        #expect(request.endpoint == "json/data/warmups.json")
     }
 
-    // MARK: - Load Tests
+    @Test func suggestionsDataRequestConfiguration() {
+        let request = SuggestionsDataRequest()
 
-    @Test func loadFallsBackToBundleWhenRemoteFails() async {
-        // Clear cache to force remote/bundle fallback
-        RemoteConfigService.clearCache(for: FormatsRequest())
-
-        // Load should fall back to bundle if remote is unavailable
-        let formats = await RemoteConfigService.load(FormatsRequest())
-
-        #expect(formats != nil)
-        #expect(formats?.isEmpty == false)
-
-        // Cleanup
-        RemoteConfigService.clearCache(for: FormatsRequest())
+        #expect(request.baseURL == RemoteConfigConstants.baseURL)
+        #expect(request.endpoint == "json/data/suggestions.json")
     }
 
-    @Test func loadReturnsOpenings() async {
-        RemoteConfigService.clearCache(for: OpeningsRequest())
+    // MARK: - Translation Request Configuration Tests
 
-        let openings = await RemoteConfigService.load(OpeningsRequest())
+    @Test func formatsTranslationRequestConfiguration() {
+        let request = FormatsTranslationRequest()
 
-        #expect(openings != nil)
-        #expect(openings?.isEmpty == false)
-
-        // Cleanup
-        RemoteConfigService.clearCache(for: OpeningsRequest())
+        #expect(request.baseURL == RemoteConfigConstants.baseURL)
+        #expect(request.endpoint.contains("json/translations/"))
+        #expect(request.endpoint.contains("/formats.json"))
     }
 
-    @Test func loadReturnsWarmUps() async {
-        RemoteConfigService.clearCache(for: WarmUpsRequest())
+    @Test func openingsTranslationRequestConfiguration() {
+        let request = OpeningsTranslationRequest()
 
-        let warmUps = await RemoteConfigService.load(WarmUpsRequest())
+        #expect(request.baseURL == RemoteConfigConstants.baseURL)
+        #expect(request.endpoint.contains("json/translations/"))
+        #expect(request.endpoint.contains("/openings.json"))
+    }
 
-        #expect(warmUps != nil)
-        #expect(warmUps?.isEmpty == false)
+    @Test func warmUpsTranslationRequestConfiguration() {
+        let request = WarmUpsTranslationRequest()
 
-        // Cleanup
-        RemoteConfigService.clearCache(for: WarmUpsRequest())
+        #expect(request.baseURL == RemoteConfigConstants.baseURL)
+        #expect(request.endpoint.contains("json/translations/"))
+        #expect(request.endpoint.contains("/warmups.json"))
+    }
+
+    @Test func suggestionsTranslationRequestConfiguration() {
+        let request = SuggestionsTranslationRequest()
+
+        #expect(request.baseURL == RemoteConfigConstants.baseURL)
+        #expect(request.endpoint.contains("json/translations/"))
+        #expect(request.endpoint.contains("/suggestions.json"))
     }
 
     // MARK: - Constants Tests
@@ -169,5 +82,72 @@ struct RemoteConfigServiceTests {
         #expect(RemoteConfigConstants.baseURL.isEmpty == false)
         #expect(RemoteConfigConstants.baseURL.hasPrefix("https://"))
         #expect(RemoteConfigConstants.jsonPath == "json/")
+    }
+
+    @Test func supportedLanguagesIncludesEnglishAndSpanish() {
+        #expect(RemoteConfigConstants.supportedLanguages.contains("en"))
+        #expect(RemoteConfigConstants.supportedLanguages.contains("es"))
+    }
+
+    @Test func defaultLanguageIsEnglish() {
+        #expect(RemoteConfigConstants.defaultLanguage == "en")
+    }
+
+    @Test func currentLanguageCodeReturnsValidLanguage() {
+        let languageCode = RemoteConfigConstants.currentLanguageCode
+        #expect(RemoteConfigConstants.supportedLanguages.contains(languageCode))
+    }
+
+    // MARK: - Load Tests (Integration)
+
+    @Test func loadFormatsData() async throws {
+        let formats = try await RemoteConfigService.load(FormatsDataRequest())
+
+        #expect(formats.isEmpty == false)
+        #expect(formats.first?.id.isEmpty == false)
+    }
+
+    @Test func loadFormatsTranslations() async throws {
+        let translations = try await RemoteConfigService.load(FormatsTranslationRequest())
+
+        #expect(translations.isEmpty == false)
+    }
+
+    @Test func loadOpeningsData() async throws {
+        let openings = try await RemoteConfigService.load(OpeningsDataRequest())
+
+        #expect(openings.isEmpty == false)
+        #expect(openings.first?.id.isEmpty == false)
+    }
+
+    @Test func loadOpeningsTranslations() async throws {
+        let translations = try await RemoteConfigService.load(OpeningsTranslationRequest())
+
+        #expect(translations.isEmpty == false)
+    }
+
+    @Test func loadWarmUpsData() async throws {
+        let warmUps = try await RemoteConfigService.load(WarmUpsDataRequest())
+
+        #expect(warmUps.isEmpty == false)
+        #expect(warmUps.first?.id.isEmpty == false)
+    }
+
+    @Test func loadWarmUpsTranslations() async throws {
+        let translations = try await RemoteConfigService.load(WarmUpsTranslationRequest())
+
+        #expect(translations.isEmpty == false)
+    }
+
+    @Test func loadSuggestionsData() async throws {
+        let data = try await RemoteConfigService.load(SuggestionsDataRequest())
+
+        #expect(data.categories.isEmpty == false)
+    }
+
+    @Test func loadSuggestionsTranslations() async throws {
+        let translations = try await RemoteConfigService.load(SuggestionsTranslationRequest())
+
+        #expect(translations.isEmpty == false)
     }
 }

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		6259C33E2EF6456700B41D47 /* ComposableArchitecture in Frameworks */ = {isa = PBXBuildFile; productRef = 6259C33D2EF6456700B41D47 /* ComposableArchitecture */; };
+		6297FFD92F16B01E006AC71A /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 6297FFD82F16B01E006AC71A /* Localizable.xcstrings */; };
 		62FD12CB2EF645E800C22B46 /* ConfettiSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 62FD12CA2EF645E800C22B46 /* ConfettiSwiftUI */; };
 /* End PBXBuildFile section */
 
@@ -32,6 +33,7 @@
 		6259C3122EF6453E00B41D47 /* FirstBeat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FirstBeat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6259C31F2EF6454100B41D47 /* FirstBeatTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FirstBeatTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6259C3292EF6454100B41D47 /* FirstBeatUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FirstBeatUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		6297FFD82F16B01E006AC71A /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -82,6 +84,7 @@
 		6259C3092EF6453E00B41D47 = {
 			isa = PBXGroup;
 			children = (
+				6297FFD82F16B01E006AC71A /* Localizable.xcstrings */,
 				6259C3142EF6453E00B41D47 /* FirstBeat */,
 				6259C3222EF6454100B41D47 /* FirstBeatTests */,
 				6259C32C2EF6454100B41D47 /* FirstBeatUITests */,
@@ -201,6 +204,7 @@
 			knownRegions = (
 				en,
 				Base,
+				es,
 			);
 			mainGroup = 6259C3092EF6453E00B41D47;
 			minimizedProjectReferenceProxies = 1;
@@ -225,6 +229,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6297FFD92F16B01E006AC71A /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -342,6 +347,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -399,6 +405,7 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -423,7 +430,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = nineteenseventysix.FirstBeat;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -456,7 +463,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = nineteenseventysix.FirstBeat;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;

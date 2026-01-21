@@ -16,6 +16,11 @@ struct WarmUpListFeature {
         var selectedCategory: WarmUpCategory? = nil
         var favoriteWarmUpNames: Set<String> = []
         var isLoading: Bool = false
+        var errorMessage: String?
+
+        var hasError: Bool {
+            errorMessage != nil
+        }
 
         var favorites: [WarmUp] {
             warmUps.filter { favoriteWarmUpNames.contains($0.name) }
@@ -34,6 +39,8 @@ struct WarmUpListFeature {
         case toggleFavorite(String)
         case warmUpsLoaded([WarmUp])
         case favoritesLoaded(Set<String>)
+        case loadFailed(String)
+        case retryTapped
     }
 
     @Dependency(\.warmUpService) var service
@@ -44,12 +51,17 @@ struct WarmUpListFeature {
             switch action {
             case .onAppear:
                 state.isLoading = true
+                state.errorMessage = nil
                 return .run { send in
-                    async let warmUps = service.fetchWarmUps()
-                    async let favorites = favoritesService.fetchAllFavorites()
+                    do {
+                        async let warmUps = service.fetchWarmUps()
+                        async let favorites = favoritesService.fetchAllFavorites()
 
-                    await send(.warmUpsLoaded(warmUps))
-                    await send(.favoritesLoaded(favorites))
+                        await send(.warmUpsLoaded(try warmUps))
+                        await send(.favoritesLoaded(favorites))
+                    } catch {
+                        await send(.loadFailed(error.localizedDescription))
+                    }
                 }
 
             case .warmUpsLoaded(let warmUps):
@@ -60,6 +72,15 @@ struct WarmUpListFeature {
             case .favoritesLoaded(let favorites):
                 state.favoriteWarmUpNames = favorites
                 return .none
+
+            case .loadFailed(let message):
+                state.isLoading = false
+                state.errorMessage = message
+                return .none
+
+            case .retryTapped:
+                state.warmUps = []
+                return .send(.onAppear)
 
             case .categorySelected(let category):
                 state.selectedCategory = category

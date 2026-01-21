@@ -7,6 +7,7 @@
 
 import ComposableArchitecture
 import Dependencies
+import Foundation
 
 @Reducer
 struct SessionSetupFeature {
@@ -25,9 +26,14 @@ struct SessionSetupFeature {
         // Loading state
         var isLoadingFormats: Bool = false
         var isLoadingOpenings: Bool = false
+        var errorMessage: String?
 
         var isLoading: Bool {
             isLoadingFormats || isLoadingOpenings
+        }
+
+        var hasError: Bool {
+            errorMessage != nil
         }
 
         mutating func updateAvailableOpenings() {
@@ -53,6 +59,8 @@ struct SessionSetupFeature {
         case onAppear
         case formatsLoaded([FormatType])
         case openingsLoaded([Opening])
+        case loadFailed(String)
+        case retryTapped
         case typeSelected(FormatType)
         case openingSelected(Opening?)
         case durationChanged(Int)
@@ -76,14 +84,30 @@ struct SessionSetupFeature {
 
                 state.isLoadingFormats = true
                 state.isLoadingOpenings = true
+                state.errorMessage = nil
 
                 return .run { send in
-                    async let formats = formatService.fetchFormats()
-                    async let openings = openingService.fetchOpenings()
+                    do {
+                        async let formats = formatService.fetchFormats()
+                        async let openings = openingService.fetchOpenings()
 
-                    await send(.formatsLoaded(formats))
-                    await send(.openingsLoaded(openings))
+                        await send(.formatsLoaded(try formats))
+                        await send(.openingsLoaded(try openings))
+                    } catch {
+                        await send(.loadFailed(error.localizedDescription))
+                    }
                 }
+
+            case .loadFailed(let message):
+                state.isLoadingFormats = false
+                state.isLoadingOpenings = false
+                state.errorMessage = message
+                return .none
+
+            case .retryTapped:
+                state.formats = []
+                state.openings = []
+                return .send(.onAppear)
 
             case .formatsLoaded(let formats):
                 state.formats = formats

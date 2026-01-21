@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct FormatSegment: Equatable, Identifiable, Codable {
+struct FormatSegment: Identifiable, Codable {
     let id: UUID
     let title: String
     let portion: Double   // 0.0 → 1.0
@@ -38,9 +38,15 @@ struct FormatSegment: Equatable, Identifiable, Codable {
             ? "\(minutes)m"
             : "\(minutes)m \(remainder)s"
     }
+
+    nonisolated static func == (lhs: FormatSegment, rhs: FormatSegment) -> Bool {
+        lhs.id == rhs.id && lhs.title == rhs.title && lhs.portion == rhs.portion
+    }
 }
 
-struct FormatType: Equatable, Identifiable, Codable {
+extension FormatSegment: Equatable {}
+
+struct FormatType: Identifiable, Codable {
     let id: String
     let title: String
     let name: String
@@ -49,7 +55,20 @@ struct FormatType: Equatable, Identifiable, Codable {
     let requiredOpeningId: String?
     let preferredOpeningId: String?
     let allowedOpeningIds: [String]?
+
+    nonisolated static func == (lhs: FormatType, rhs: FormatType) -> Bool {
+        lhs.id == rhs.id &&
+        lhs.title == rhs.title &&
+        lhs.name == rhs.name &&
+        lhs.description == rhs.description &&
+        lhs.segments == rhs.segments &&
+        lhs.requiredOpeningId == rhs.requiredOpeningId &&
+        lhs.preferredOpeningId == rhs.preferredOpeningId &&
+        lhs.allowedOpeningIds == rhs.allowedOpeningIds
+    }
 }
+
+extension FormatType: Equatable {}
 
 #if DEBUG
 extension FormatType {

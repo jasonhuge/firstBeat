@@ -7,23 +7,13 @@
 
 import Foundation
 import SwiftData
+import Dependencies
 
+// MARK: - Live Store (SwiftData with ModelActor)
+
+@ModelActor
 actor UsedSuggestionsStore {
-    private let modelContainer: ModelContainer
-    private let modelContext: ModelContext
-
     private static let aiCategoryId = "ai"
-
-    init() {
-        do {
-            let schema = Schema([UsedSuggestion.self])
-            let config = ModelConfiguration(isStoredInMemoryOnly: false)
-            self.modelContainer = try ModelContainer(for: schema, configurations: config)
-            self.modelContext = ModelContext(modelContainer)
-        } catch {
-            fatalError("Failed to create UsedSuggestionsStore: \(error)")
-        }
-    }
 
     // MARK: - Random Suggestions
 
@@ -77,5 +67,49 @@ actor UsedSuggestionsStore {
 
     func resetAI() {
         reset(categoryId: Self.aiCategoryId)
+    }
+}
+
+// MARK: - DependencyKey
+
+extension UsedSuggestionsStore: DependencyKey {
+    private static let liveModelContainer: ModelContainer = {
+        do {
+            return try ModelContainer(for: UsedSuggestion.self)
+        } catch {
+            fatalError("Failed to create UsedSuggestion model container: \(error.localizedDescription)")
+        }
+    }()
+
+    private static let testModelContainer: ModelContainer = {
+        do {
+            return try ModelContainer(
+                for: UsedSuggestion.self,
+                configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+            )
+        } catch {
+            fatalError("Failed to create test UsedSuggestion model container: \(error.localizedDescription)")
+        }
+    }()
+
+    static var liveValue: UsedSuggestionsStore {
+        UsedSuggestionsStore(modelContainer: liveModelContainer)
+    }
+
+    static var testValue: UsedSuggestionsStore {
+        UsedSuggestionsStore(modelContainer: testModelContainer)
+    }
+
+    static var previewValue: UsedSuggestionsStore {
+        UsedSuggestionsStore(modelContainer: testModelContainer)
+    }
+}
+
+// MARK: - DependencyValues
+
+extension DependencyValues {
+    var usedSuggestionsStore: UsedSuggestionsStore {
+        get { self[UsedSuggestionsStore.self] }
+        set { self[UsedSuggestionsStore.self] = newValue }
     }
 }

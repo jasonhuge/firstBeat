@@ -9,40 +9,30 @@ import Foundation
 import Dependencies
 import FoundationModels
 
-enum SuggestionBackend: Equatable {
-    case appleIntelligence
-    case randomSuggestions
-}
-
-struct AIAvailabilityService {
-    var checkAvailability: () async -> SuggestionBackend
+struct AIAvailabilityService: Sendable {
+    var isAppleIntelligenceAvailable: @MainActor @Sendable () async -> Bool
 }
 
 extension AIAvailabilityService: DependencyKey {
     static var liveValue: AIAvailabilityService {
         Self {
-            // Check if Apple Intelligence is available
             switch SystemLanguageModel.default.availability {
             case .available:
-                return .appleIntelligence
+                return true
             case .unavailable:
-                return .randomSuggestions
+                return false
             @unknown default:
-                return .randomSuggestions
+                return false
             }
         }
     }
 
     static var testValue: AIAvailabilityService {
-        Self {
-            .randomSuggestions
-        }
+        Self { false }
     }
 
     static var previewValue: AIAvailabilityService {
-        Self {
-            .appleIntelligence
-        }
+        Self { true }
     }
 }
 

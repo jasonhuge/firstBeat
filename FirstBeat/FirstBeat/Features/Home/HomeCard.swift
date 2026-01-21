@@ -16,15 +16,15 @@ enum HomeCard: String, CaseIterable, Equatable, Identifiable {
 
     var title: String {
         switch self {
-        case .warmUps: return "Warm-ups"
-        case .practice: return "Practice"
+        case .warmUps: return L10n.Home.warmUpsTitle
+        case .practice: return L10n.Home.practiceTitle
         }
     }
 
     var description: String {
         switch self {
-        case .warmUps: return "Browse and explore improv exercises to energize your group"
-        case .practice: return "Start a guided improv practice session"
+        case .warmUps: return L10n.Home.warmUpsDescription
+        case .practice: return L10n.Home.practiceDescription
         }
     }
 

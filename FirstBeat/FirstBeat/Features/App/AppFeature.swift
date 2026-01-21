@@ -35,6 +35,7 @@ struct AppFeature {
             case practiceEntry(PracticeEntryFeature.State)
             case suggestion(SuggestionFeature.State)
             case randomSuggestion(RandomSuggestionFeature.State)
+            case quickTimer(QuickTimerFeature.State)
             case practiceSetup(SessionSetupFeature.State)
             case practiceSession(SessionFeature.State)
             case warmUpList(WarmUpListFeature.State)
@@ -45,6 +46,7 @@ struct AppFeature {
             case practiceEntry(PracticeEntryFeature.Action)
             case suggestion(SuggestionFeature.Action)
             case randomSuggestion(RandomSuggestionFeature.Action)
+            case quickTimer(QuickTimerFeature.Action)
             case practiceSetup(SessionSetupFeature.Action)
             case practiceSession(SessionFeature.Action)
             case warmUpList(WarmUpListFeature.Action)
@@ -62,6 +64,10 @@ struct AppFeature {
 
             Scope(state: \.randomSuggestion, action: \.randomSuggestion) {
                 RandomSuggestionFeature()
+            }
+
+            Scope(state: \.quickTimer, action: \.quickTimer) {
+                QuickTimerFeature()
             }
 
             Scope(state: \.practiceSetup, action: \.practiceSetup) {
@@ -112,9 +118,21 @@ struct AppFeature {
                 state.path.append(.randomSuggestion(RandomSuggestionFeature.State()))
                 return .none
 
-            // MARK: Practice Entry → Direct Setup (no suggestion)
+            // MARK: Practice Entry → Session Setup (no suggestion)
             case .path(.element(id: _, action: .practiceEntry(.delegate(.startPractice)))):
                 state.path.append(.practiceSetup(SessionSetupFeature.State(suggestion: nil)))
+                return .none
+
+            // MARK: Practice Entry → Quick Timer
+            case .path(.element(id: _, action: .practiceEntry(.delegate(.quickTimer)))):
+                state.path.append(.quickTimer(QuickTimerFeature.State()))
+                return .none
+
+            // MARK: Quick Timer → Practice Session
+            case .path(.element(id: _, action: .quickTimer(.delegate(.start(let duration))))):
+                state.path.append(.practiceSession(SessionFeature.State(
+                    sessionType: .quick(duration: duration)
+                )))
                 return .none
 
             // MARK: AI Suggestion → Practice Setup (with suggestion)
@@ -130,10 +148,12 @@ struct AppFeature {
             // MARK: Practice Setup → Practice Session
             case .path(.element(id: _, action: .practiceSetup(.delegate(.next(let suggestion, let format, let opening, let duration))))):
                 state.path.append(.practiceSession(SessionFeature.State(
-                    title: suggestion,
-                    format: format,
-                    opening: opening,
-                    duration: duration
+                    sessionType: .format(
+                        title: suggestion,
+                        format: format,
+                        opening: opening,
+                        duration: duration
+                    )
                 )))
                 return .none
 

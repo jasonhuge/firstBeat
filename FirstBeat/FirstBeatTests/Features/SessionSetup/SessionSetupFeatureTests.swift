@@ -45,13 +45,19 @@ struct SessionSetupFeatureTests {
             $0.openingService.fetchOpenings = { mockOpenings }
         }
 
-        await store.send(.onAppear)
+        await store.send(.onAppear) {
+            $0.isLoadingFormats = true
+            $0.isLoadingOpenings = true
+            $0.errorMessage = nil
+        }
         await store.receive(.formatsLoaded(mockFormats)) {
             $0.formats = mockFormats
+            $0.isLoadingFormats = false
             $0.selectedType = mockFormats.first
         }
         await store.receive(.openingsLoaded(mockOpenings)) {
             $0.openings = mockOpenings
+            $0.isLoadingOpenings = false
             $0.updateAvailableOpenings()
             // Auto-select preferred opening for Harold (invocation)
             $0.selectedOpening = Opening.invocation

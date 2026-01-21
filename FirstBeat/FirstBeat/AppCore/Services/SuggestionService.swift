@@ -9,12 +9,12 @@ import FoundationModels
 import Dependencies
 import Foundation
 
-enum SuggestionServiceError: Error{
+enum SuggestionServiceError: Error {
     case noSuggestionsAvailable
 }
 
 struct SuggestionService {
-    var fetchSuggestions: (String) async -> AsyncStream<String>
+    var fetchSuggestions: (String, Set<String>) async -> AsyncStream<String>  // input, usedSuggestions
 }
 
 // MARK: - DependencyKey
@@ -22,11 +22,12 @@ struct SuggestionService {
 extension SuggestionService: DependencyKey {
 
     static var liveValue: SuggestionService {
-        Self { input in
+        Self { input, usedSuggestions in
             AsyncStream { continuation in
                 Task {
                     await runSuggestionStream(
                         input: input,
+                        usedSuggestions: usedSuggestions,
                         continuation: continuation
                     )
                 }
@@ -39,11 +40,12 @@ extension SuggestionService: DependencyKey {
 
 private func runSuggestionStream(
     input: String,
+    usedSuggestions: Set<String>,
     continuation: AsyncStream<String>.Continuation
 ) async {
 
-    var seenSuggestions: Set<String> = []
-    var session = LanguageModelSession()
+    var seenSuggestions = usedSuggestions
+    var session = LanguageModelSession(instructions: SuggestionService.sessionInstructions())
     var currentInput = input
 
     while true {
@@ -58,7 +60,7 @@ private func runSuggestionStream(
 
         } catch {
             if isTokenLimitError(error) {
-                session = LanguageModelSession()
+                session = LanguageModelSession(instructions: SuggestionService.sessionInstructions())
                 continue
             }
 
@@ -68,7 +70,7 @@ private func runSuggestionStream(
                 .randomElement() {
 
                 currentInput = fallbackInput
-                session = LanguageModelSession()
+                session = LanguageModelSession(instructions: SuggestionService.sessionInstructions())
                 continue
             }
 
@@ -128,6 +130,33 @@ private func isUnsafeContentError(_ error: Error) -> Bool {
         || message.contains("content")
 }
 
+// MARK: - Session Instructions
+
+extension SuggestionService {
+
+    /// Creates session instructions with the user's preferred language
+    static func sessionInstructions() -> String {
+        let languageName = currentLanguageName()
+
+        return """
+        You are an improv comedy suggestion generator.
+        Generate short, fun audience suggestions (1-2 words each).
+        Always respond in \(languageName).
+        """
+    }
+
+    /// Returns the user's preferred language name
+    private static func currentLanguageName() -> String {
+        let locale = Locale.current
+        guard let languageCode = locale.language.languageCode else {
+            return "English"
+        }
+
+        // Get the localized name of the language in English for the model
+        return Locale(identifier: "en").localizedString(forLanguageCode: languageCode.identifier) ?? "English"
+    }
+}
+
 // MARK: - Prompt Construction
 
 extension SuggestionService {
@@ -137,24 +166,33 @@ extension SuggestionService {
         excluding seenSuggestions: Set<String>
     ) -> String {
 
-        let seenList = seenSuggestions.joined(separator: ", ")
+        var prompt = """
+        Improv comedy prompt: "\(input)"
 
-        return """
-        You are an enthusiastic audience member at a live comedy improv show.
+        Give 3 short audience suggestions (1-2 words each).
 
-        The improvisers have asked for a suggestion based on this prompt:
-        \"\(input)\"
-
-        As an audience member, provide 3 suggestions in a numbered list.
-        Keep each suggestion short and simple (1–3 words).
-
-        Do not provide any of the following suggestions you have already given in this session:
-        \(seenList)
-
-        Do not try to be funny or witty.
-
-        If the prompt involves an object, generate suggestions without mentioning the object itself or anything within its worldview. Absurd is allowed.
+        Example format:
+        1. Dentist
+        2. Hawaii
+        3. Grandma
         """
+
+        if !seenSuggestions.isEmpty {
+            let seenList = seenSuggestions.joined(separator: ", ")
+            prompt += """
+
+
+        Already used: \(seenList)
+        """
+        }
+
+        prompt += """
+
+
+        Your suggestions:
+        """
+
+        return prompt
     }
 }
 

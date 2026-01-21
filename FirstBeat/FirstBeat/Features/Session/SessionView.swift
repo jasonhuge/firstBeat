@@ -16,6 +16,7 @@ struct SessionView: View {
 
     @State private var showConfetti: Bool = false
     @State private var pulse: Bool = false
+    @State private var showSessionInfo: Bool = false
 
     var body: some View {
         GeometryReader { geo in
@@ -27,44 +28,11 @@ struct SessionView: View {
                 VStack(spacing: 0) {
                     Spacer()
 
-                    ZStack {
-                        if !store.showTimerUI {
-                            GeometryReader { scrollGeo in
-                                ScrollView {
-                                    VStack {
-                                        Spacer(minLength: 0)
-                                        SessionSummaryCard(
-                                            suggestion: store.title,
-                                            format: store.format,
-                                            opening: store.opening,
-                                            duration: store.duration
-                                        )
-                                        Spacer(minLength: 0)
-                                    }
-                                    .padding(.horizontal)
-                                    .frame(minHeight: scrollGeo.size.height)
-                                }
-                            }
-                            .transition(.asymmetric(
-                                insertion: .move(edge: .top).combined(with: .opacity),
-                                removal: .move(edge: .top).combined(with: .opacity)
-                            ))
-                            .zIndex(store.showTimerUI ? 0 : 1)
-                        }
-
-                        if store.showTimerUI {
-                            timerArea
-                                .transition(.asymmetric(
-                                    insertion: .move(edge: .bottom).combined(with: .opacity),
-                                    removal: .move(edge: .bottom).combined(with: .opacity)
-                                ))
-                                .zIndex(store.showTimerUI ? 1 : 0)
-                        }
-                    }
+                    timerArea
 
                     Spacer()
 
-                    if !isLandscape && store.currentSegmentIndex < store.format.segments.count {
+                    if !isLandscape && store.currentSegmentIndex < store.segments.count {
                         playPauseButton
                             .padding(.bottom, Constants.playButtonBottomPadding)
                     } else if !isLandscape {
@@ -73,14 +41,20 @@ struct SessionView: View {
                     }
                 }
             }
-            .navigationTitle(store.title ?? "\(store.format.title) Time")
+            .navigationTitle(store.sessionType.navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                if isLandscape && store.currentSegmentIndex < store.format.segments.count {
-                    ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    if case .format = store.sessionType {
+                        infoButton
+                    }
+                    if isLandscape && store.currentSegmentIndex < store.segments.count {
                         toolbarPlayPauseButton
                     }
                 }
+            }
+            .sheet(isPresented: $showSessionInfo) {
+                sessionInfoSheet
             }
             .onChange(of: store.timerRunning) { _, newValue in
                 UIApplication.shared.isIdleTimerDisabled = newValue
@@ -181,6 +155,28 @@ extension SessionView {
         }
     }
 
+    private var infoButton: some View {
+        Button {
+            showSessionInfo = true
+        } label: {
+            Image(systemName: "info.circle")
+                .font(.title3)
+                .foregroundColor(AppTheme.practiceColor)
+        }
+    }
+
+    @ViewBuilder
+    private var sessionInfoSheet: some View {
+        if case .format(let title, let format, let opening, let duration) = store.sessionType {
+            SessionInfoSheet(
+                suggestion: title,
+                format: format,
+                opening: opening,
+                duration: duration
+            )
+        }
+    }
+
     private var timerArea: some View {
         VStack(spacing: Constants.timerSpacing) {
 
@@ -205,9 +201,9 @@ extension SessionView {
             }
 
             // Current segment timer
-            else if store.currentSegmentIndex < store.format.segments.count {
+            else if store.currentSegmentIndex < store.segments.count {
                 VStack(spacing: Constants.segmentSpacing) {
-                    Text(store.format.segments[store.currentSegmentIndex].title)
+                    Text(store.segments[store.currentSegmentIndex].title)
                         .font(.largeTitle)
                         .fontWeight(.semibold)
                         .padding(.horizontal, Constants.segmentLabelHorizontalPadding)
@@ -242,7 +238,7 @@ extension SessionView {
             // Complete
             else {
                 ZStack {
-                    Text("\(store.format.name) complete!")
+                    Text(store.sessionType.completionMessage)
                         .font(.title)
                         .foregroundColor(AppTheme.successColor)
                         .padding(.vertical, Constants.completePaddingVertical)
@@ -254,8 +250,8 @@ extension SessionView {
     }
 
     private func progress() -> CGFloat {
-        guard store.currentSegmentIndex < store.format.segments.count else { return 0 }
-        let total = store.format.segments[store.currentSegmentIndex].duration(from: store.duration)
+        guard store.currentSegmentIndex < store.segments.count else { return 0 }
+        let total = store.segments[store.currentSegmentIndex].duration(from: store.duration)
         return CGFloat(store.remainingTime) / CGFloat(total)
     }
 
@@ -275,167 +271,88 @@ extension SessionView {
     }
 }
 
-// MARK: - Practice Summary Card
-struct SessionSummaryCard: View {
+// MARK: - Session Info Sheet
+struct SessionInfoSheet: View {
+    @Environment(\.dismiss) var dismiss
+
     let suggestion: String?
     let format: FormatType
     let opening: Opening
     let duration: Int
 
-    @State private var showFormatInfo = false
-    @State private var showOpeningInfo = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Constants.cardSpacing) {
-
-            // Suggestion
-            if let suggestion = suggestion, !suggestion.isEmpty {
-                Text("Suggestion: \(suggestion)")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .foregroundColor(Color(.label))
-                    .multilineTextAlignment(.leading)
-            } else {
-                Text("Free Practice")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .foregroundColor(Color(.label))
-                    .multilineTextAlignment(.leading)
-            }
-
-            Divider()
-
-            // Metadata - Vertical Stack
-            VStack(alignment: .leading, spacing: Constants.metadataSpacing) {
-                MetadataRow(
-                    icon: "theatermasks",
-                    text: format.title,
-                    showInfo: true,
-                    onInfoTap: { showFormatInfo = true }
-                )
-                MetadataRow(
-                    icon: "star.circle",
-                    text: opening.name,
-                    showInfo: true,
-                    onInfoTap: { showOpeningInfo = true }
-                )
-                MetadataRow(
-                    icon: "clock",
-                    text: "\(duration) min",
-                    showInfo: false
-                )
-            }
-
-            Divider()
-
-            // Segment breakdown
-            VStack(alignment: .leading, spacing: Constants.segmentBreakdownSpacing) {
-                Text("Segments")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-
-                ForEach(format.segments) { segment in
-                    HStack {
-                        Text(segment.title)
-                            .foregroundColor(Color(.label))
-                        Spacer()
-                        Text(segment.stringDuration(duration))
-                            .foregroundColor(Color(.secondaryLabel))
-                    }
-                    .font(.footnote)
-                }
-            }
-        }
-        .padding(Constants.cardPadding)
-        .background(
-            RoundedRectangle(cornerRadius: Constants.cardCornerRadius)
-                .fill(Color(.secondarySystemBackground))
-                .shadow(color: .black.opacity(Constants.cardShadowOpacity), radius: Constants.cardShadowRadius, y: Constants.cardShadowY)
-        )
-        .sheet(isPresented: $showFormatInfo) {
-            InfoSheet(
-                title: format.title,
-                description: format.description,
-                icon: "theatermasks"
-            )
-            .presentationDetents([.medium, .large])
-            .presentationDragIndicator(.visible)
-        }
-        .sheet(isPresented: $showOpeningInfo) {
-            InfoSheet(
-                title: opening.name,
-                description: opening.description,
-                icon: "star.circle"
-            )
-            .presentationDetents([.medium, .large])
-            .presentationDragIndicator(.visible)
-        }
-    }
-}
-
-// MARK: - Metadata Row Component
-private struct MetadataRow: View {
-    let icon: String
-    let text: String
-    let showInfo: Bool
-    var onInfoTap: (() -> Void)? = nil
-
-    var body: some View {
-        HStack(spacing: Constants.spacing) {
-            Label {
-                Text(text)
-                    .font(.subheadline)
-            } icon: {
-                Image(systemName: icon)
-                    .frame(width: SessionSummaryCard.Constants.iconWidth)
-            }
-            .foregroundColor(Color(.secondaryLabel))
-
-            if showInfo {
-                Button(action: {
-                    onInfoTap?()
-                }) {
-                    Image(systemName: "info.circle")
-                        .font(.subheadline)
-                        .foregroundColor(Color(.tertiaryLabel))
-                }
-            }
-        }
-    }
-
-    enum Constants {
-        static let spacing: CGFloat = 8
-    }
-}
-
-// MARK: - Info Sheet
-private struct InfoSheet: View {
-    @Environment(\.dismiss) var dismiss
-    let title: String
-    let description: String
-    let icon: String
-
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(alignment: .leading, spacing: Constants.contentSpacing) {
-                    HStack {
-                        Image(systemName: icon)
-                            .font(.largeTitle)
-                            .foregroundColor(AppTheme.practiceColor)
+                VStack(alignment: .leading, spacing: 20) {
+                    // Suggestion
+                    if let suggestion = suggestion, !suggestion.isEmpty {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Suggestion")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Text(suggestion)
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                        }
+                    }
 
-                        Text(title)
-                            .font(.title2)
+                    // Format
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Format")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Text(format.title)
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                        Text(format.description)
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                    }
+
+                    // Opening
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Opening")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Text(opening.name)
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                        Text(opening.description)
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                    }
+
+                    // Duration
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Duration")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Text("\(duration) minutes")
+                            .font(.title3)
                             .fontWeight(.semibold)
                     }
-                    .padding(.bottom, Constants.titleBottomPadding)
 
-                    Text(description)
-                        .font(.body)
-                        .foregroundColor(Color(.label))
+                    // Segments
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Segments")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+
+                        ForEach(format.segments) { segment in
+                            HStack {
+                                Text(segment.title)
+                                    .font(.body)
+                                Spacer()
+                                Text(segment.stringDuration(duration))
+                                    .font(.body)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
                 }
                 .padding()
             }
+            .navigationTitle("Session Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -445,41 +362,27 @@ private struct InfoSheet: View {
                 }
             }
         }
-    }
-
-    enum Constants {
-        static let contentSpacing: CGFloat = 16
-        static let titleBottomPadding: CGFloat = 8
-    }
-}
-
-// MARK: - Constants
-extension SessionSummaryCard {
-    enum Constants {
-        static let cardSpacing: CGFloat = 16
-        static let metadataSpacing: CGFloat = 12
-        static let segmentBreakdownSpacing: CGFloat = 8
-        static let cardPadding: CGFloat = 16
-        static let cardCornerRadius: CGFloat = 20
-        static let cardShadowOpacity: CGFloat = 0.10
-        static let cardShadowRadius: CGFloat = 6
-        static let cardShadowY: CGFloat = 3
-        static let iconWidth: CGFloat = 20
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 }
 
 
+#if DEBUG
 #Preview {
     NavigationView {
         SessionView(store: Store(
             initialState: SessionFeature.State(
-                title: "A Happy Clam",
-                format: .mock,
-                opening: .mock,
-                duration: 2
+                sessionType: .format(
+                    title: "A Happy Clam",
+                    format: .mock,
+                    opening: .mock,
+                    duration: 2
+                )
             ), reducer: {
                 SessionFeature()
             }
         ))
     }
 }
+#endif

@@ -35,16 +35,11 @@ struct SessionFeatureTests {
 
     @Test func initialStateWithTitle() {
         let state = SessionFeature.State(
-            title: "Test",
-            format: Self.testHaroldFormat,
-            opening: Self.testOpening,
-            duration: 25
+            sessionType: .format(title: "Test", format: Self.testHaroldFormat, opening: Self.testOpening, duration: 25)
         )
 
         #expect(state.title == "Test")
-        #expect(state.format == Self.testHaroldFormat)
-        #expect(state.opening == Self.testOpening)
-        #expect(state.duration == 25)
+        #expect(state.sessionType.duration == 25)
         #expect(state.currentSegmentIndex == 0)
         #expect(state.timerRunning == false)
         #expect(state.showPreshowCountdown == false)
@@ -52,16 +47,11 @@ struct SessionFeatureTests {
 
     @Test func initialStateWithoutTitle() {
         let state = SessionFeature.State(
-            title: nil,
-            format: Self.testHaroldFormat,
-            opening: Self.testOpening,
-            duration: 25
+            sessionType: .format(title: nil, format: Self.testHaroldFormat, opening: Self.testOpening, duration: 25)
         )
 
         #expect(state.title == nil)
-        #expect(state.format == Self.testHaroldFormat)
-        #expect(state.opening == Self.testOpening)
-        #expect(state.duration == 25)
+        #expect(state.sessionType.duration == 25)
         #expect(state.currentSegmentIndex == 0)
         #expect(state.timerRunning == false)
         #expect(state.showPreshowCountdown == false)
@@ -72,10 +62,7 @@ struct SessionFeatureTests {
 
         let store = TestStore(
             initialState: SessionFeature.State(
-                title: "Test",
-                format: Self.testHaroldFormat,
-                opening: Self.testOpening,
-                duration: 25
+                sessionType: .format(title: "Test", format: Self.testHaroldFormat, opening: Self.testOpening, duration: 25)
             )
         ) {
             SessionFeature()
@@ -83,11 +70,9 @@ struct SessionFeatureTests {
             $0.continuousClock = clock
         }
 
-        store.exhaustivity = .off
+        store.exhaustivity = .off(showSkippedAssertions: false)
 
-        await store.send(.togglePlayPause) {
-            $0.showTimerUI = true
-        }
+        await store.send(.togglePlayPause)
 
         await store.receive(.startPreshowCountdown(resume: false)) {
             $0.timerRunning = true
@@ -99,24 +84,20 @@ struct SessionFeatureTests {
     @Test func togglePlayPausePausesRunningTimer() async {
         let clock = TestClock()
 
-        let store = TestStore(
-            initialState: SessionFeature.State(
-                title: "Test",
-                format: Self.testHaroldFormat,
-                opening: Self.testOpening,
-                duration: 25,
-                timerRunning: true,
-                showTimerUI: true
-            )
-        ) {
+        var initialState = SessionFeature.State(
+            sessionType: .format(title: "Test", format: Self.testHaroldFormat, opening: Self.testOpening, duration: 25)
+        )
+        initialState.timerRunning = true
+
+        let store = TestStore(initialState: initialState) {
             SessionFeature()
         } withDependencies: {
             $0.continuousClock = clock
         }
 
-        await store.send(.togglePlayPause) {
-            $0.showTimerUI = false
-        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.togglePlayPause)
 
         await store.receive(.pause) {
             $0.timerRunning = false
@@ -126,17 +107,14 @@ struct SessionFeatureTests {
     @Test func preshowCountdownTicksDown() async {
         let clock = TestClock()
 
-        let store = TestStore(
-            initialState: SessionFeature.State(
-                title: "Test",
-                format: Self.testHaroldFormat,
-                opening: Self.testOpening,
-                duration: 25,
-                timerRunning: true,
-                showPreshowCountdown: true,
-                preshowCountdown: 3
-            )
-        ) {
+        var initialState = SessionFeature.State(
+            sessionType: .format(title: "Test", format: Self.testHaroldFormat, opening: Self.testOpening, duration: 25)
+        )
+        initialState.timerRunning = true
+        initialState.showPreshowCountdown = true
+        initialState.preshowCountdown = 3
+
+        let store = TestStore(initialState: initialState) {
             SessionFeature()
         } withDependencies: {
             $0.continuousClock = clock
@@ -158,23 +136,20 @@ struct SessionFeatureTests {
     @Test func preshowCountdownTransitionsToSegmentTimer() async {
         let clock = TestClock()
 
-        let store = TestStore(
-            initialState: SessionFeature.State(
-                title: "Test",
-                format: Self.testHaroldFormat,
-                opening: Self.testOpening,
-                duration: 25,
-                timerRunning: true,
-                showPreshowCountdown: true,
-                preshowCountdown: 0
-            )
-        ) {
+        var initialState = SessionFeature.State(
+            sessionType: .format(title: "Test", format: Self.testHaroldFormat, opening: Self.testOpening, duration: 25)
+        )
+        initialState.timerRunning = true
+        initialState.showPreshowCountdown = true
+        initialState.preshowCountdown = 0
+
+        let store = TestStore(initialState: initialState) {
             SessionFeature()
         } withDependencies: {
             $0.continuousClock = clock
         }
 
-        store.exhaustivity = .off
+        store.exhaustivity = .off(showSkippedAssertions: false)
 
         await store.send(.tick) {
             $0.showPreshowCountdown = false
@@ -189,16 +164,13 @@ struct SessionFeatureTests {
     }
 
     @Test func segmentTimerTicksDown() async {
-        let store = TestStore(
-            initialState: SessionFeature.State(
-                title: "Test",
-                format: Self.testHaroldFormat,
-                opening: Self.testOpening,
-                duration: 25,
-                remainingTime: 10,
-                timerRunning: true
-            )
-        ) {
+        var initialState = SessionFeature.State(
+            sessionType: .format(title: "Test", format: Self.testHaroldFormat, opening: Self.testOpening, duration: 25)
+        )
+        initialState.remainingTime = 10
+        initialState.timerRunning = true
+
+        let store = TestStore(initialState: initialState) {
             SessionFeature()
         }
 
@@ -212,23 +184,20 @@ struct SessionFeatureTests {
     @Test func segmentCompletionAdvancesToNextSegment() async {
         let clock = TestClock()
 
-        let store = TestStore(
-            initialState: SessionFeature.State(
-                title: "Test",
-                format: Self.testHaroldFormat,
-                opening: Self.testOpening,
-                duration: 25,
-                currentSegmentIndex: 0,
-                remainingTime: 0,
-                timerRunning: true
-            )
-        ) {
+        var initialState = SessionFeature.State(
+            sessionType: .format(title: "Test", format: Self.testHaroldFormat, opening: Self.testOpening, duration: 25)
+        )
+        initialState.currentSegmentIndex = 0
+        initialState.remainingTime = 0
+        initialState.timerRunning = true
+
+        let store = TestStore(initialState: initialState) {
             SessionFeature()
         } withDependencies: {
             $0.continuousClock = clock
         }
 
-        store.exhaustivity = .off
+        store.exhaustivity = .off(showSkippedAssertions: false)
 
         await store.send(.tick) {
             $0.timerRunning = false
@@ -245,17 +214,14 @@ struct SessionFeatureTests {
     @Test func finalSegmentCompletionShowsConfetti() async {
         let lastSegmentIndex = SessionFeatureTests.testHaroldFormat.segments.count - 1
 
-        let store = TestStore(
-            initialState: SessionFeature.State(
-                title: "Test",
-                format: Self.testHaroldFormat,
-                opening: Self.testOpening,
-                duration: 25,
-                currentSegmentIndex: lastSegmentIndex,
-                remainingTime: 0,
-                timerRunning: true
-            )
-        ) {
+        var initialState = SessionFeature.State(
+            sessionType: .format(title: "Test", format: Self.testHaroldFormat, opening: Self.testOpening, duration: 25)
+        )
+        initialState.currentSegmentIndex = lastSegmentIndex
+        initialState.remainingTime = 0
+        initialState.timerRunning = true
+
+        let store = TestStore(initialState: initialState) {
             SessionFeature()
         }
 
@@ -269,10 +235,7 @@ struct SessionFeatureTests {
 
     @Test func totalDurationText() {
         let state = SessionFeature.State(
-            title: "Test",
-            format: Self.testHaroldFormat,
-            opening: Self.testOpening,
-            duration: 30
+            sessionType: .format(title: "Test", format: Self.testHaroldFormat, opening: Self.testOpening, duration: 30)
         )
 
         #expect(state.totalDurationText == "30 min")

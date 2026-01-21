@@ -35,6 +35,7 @@ struct WarmUpListFeatureTests {
                 tips: []
             )
         ]
+        let mockFavorites: Set<String> = ["Test Warm-up"]
 
         let store = TestStore(
             initialState: WarmUpListFeature.State()
@@ -42,18 +43,29 @@ struct WarmUpListFeatureTests {
             WarmUpListFeature()
         } withDependencies: {
             $0.warmUpService.fetchWarmUps = { mockWarmUps }
+            $0.favoritesService.fetchAllFavorites = { mockFavorites }
         }
+
+        // Use exhaustivity off since async let order is not guaranteed
+        store.exhaustivity = .off(showSkippedAssertions: false)
 
         await store.send(.onAppear) {
             $0.isLoading = true
         }
+
         await store.receive(.warmUpsLoaded(mockWarmUps)) {
             $0.warmUps = mockWarmUps
             $0.isLoading = false
         }
-        await store.receive(.favoritesLoaded([])) {
-            $0.favoriteWarmUpNames = []
+
+        await store.receive(.favoritesLoaded(mockFavorites)) {
+            $0.favoriteWarmUpNames = mockFavorites
         }
+
+        // Verify final state
+        #expect(store.state.warmUps == mockWarmUps)
+        #expect(store.state.isLoading == false)
+        #expect(store.state.favoriteWarmUpNames == mockFavorites)
     }
 
     @Test func categorySelectedFiltersWarmUps() async {
@@ -157,6 +169,9 @@ struct WarmUpListFeatureTests {
             initialState: WarmUpListFeature.State()
         ) {
             WarmUpListFeature()
+        } withDependencies: {
+            $0.favoritesService.addFavorite = { _ in }
+            $0.favoritesService.removeFavorite = { _ in }
         }
 
         // Mark as favorite

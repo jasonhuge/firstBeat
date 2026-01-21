@@ -35,7 +35,7 @@ struct UsedSuggestionsService {
 
 extension UsedSuggestionsService: DependencyKey {
     static var liveValue: UsedSuggestionsService {
-        let store = UsedSuggestionsStore()
+        @Dependency(\.usedSuggestionsStore) var store
 
         return Self(
             markUsed: { suggestion, categoryId in

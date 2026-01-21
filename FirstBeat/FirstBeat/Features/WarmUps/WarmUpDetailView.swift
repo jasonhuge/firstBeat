@@ -97,7 +97,7 @@ extension WarmUpDetailView {
 // MARK: - Section View
 
 struct SectionView<Content: View>: View {
-    let title: String
+    let title: LocalizedStringKey
     let content: () -> Content
 
     private static var spacing: CGFloat { 8 }

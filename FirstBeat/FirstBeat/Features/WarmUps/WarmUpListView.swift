@@ -16,6 +16,10 @@ struct WarmUpListView: View {
         VStack(spacing: 0) {
             if store.isLoading {
                 WarmUpLoadingView()
+            } else if store.hasError {
+                ErrorView(message: store.errorMessage) {
+                    store.send(.retryTapped)
+                }
             } else {
                 // Category filter pills
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -154,7 +158,7 @@ extension WarmUpRow {
 // MARK: - Section Header
 
 struct SectionHeaderView: View {
-    let title: String
+    let title: LocalizedStringKey
 
     var body: some View {
         Text(title)

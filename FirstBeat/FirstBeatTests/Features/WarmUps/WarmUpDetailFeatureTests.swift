@@ -46,11 +46,16 @@ struct WarmUpDetailFeatureTests {
             initialState: WarmUpDetailFeature.State(warmUp: warmUp)
         ) {
             WarmUpDetailFeature()
+        } withDependencies: {
+            $0.favoritesService.addFavorite = { _ in }
+            $0.favoritesService.removeFavorite = { _ in }
         }
 
         await store.send(.toggleFavorite) {
             $0.isFavorite = true
         }
+
+        await store.receive(.delegate(.favoriteToggled("Test Warm-up", true)))
     }
 
     @Test func toggleFavoriteUnmarksAsFavorite() async {
@@ -71,10 +76,15 @@ struct WarmUpDetailFeatureTests {
             )
         ) {
             WarmUpDetailFeature()
+        } withDependencies: {
+            $0.favoritesService.addFavorite = { _ in }
+            $0.favoritesService.removeFavorite = { _ in }
         }
 
         await store.send(.toggleFavorite) {
             $0.isFavorite = false
         }
+
+        await store.receive(.delegate(.favoriteToggled("Test Warm-up", false)))
     }
 }

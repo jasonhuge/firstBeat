@@ -8,6 +8,7 @@
 import Testing
 @testable import FirstBeat
 
+@MainActor
 struct FormatTypeTests {
 
     @Test func segmentDurationCalculation() {

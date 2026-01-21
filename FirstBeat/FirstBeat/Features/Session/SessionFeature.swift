@@ -8,15 +8,64 @@
 import SwiftUI
 import ComposableArchitecture
 
+// MARK: - Session Type
+
+enum SessionType: Equatable {
+    case quick(duration: Int)
+    case format(title: String?, format: FormatType, opening: Opening, duration: Int)
+
+    var duration: Int {
+        switch self {
+        case .quick(let duration):
+            return duration
+        case .format(_, _, _, let duration):
+            return duration
+        }
+    }
+
+    var segments: [FormatSegment] {
+        switch self {
+        case .quick:
+            return [FormatSegment(title: L10n.Session.practice, portion: 1.0)]
+        case .format(_, let format, _, _):
+            return format.segments
+        }
+    }
+
+    var title: String? {
+        switch self {
+        case .quick:
+            return nil
+        case .format(let title, _, _, _):
+            return title
+        }
+    }
+
+    var navigationTitle: String {
+        switch self {
+        case .quick:
+            return L10n.Nav.freeform
+        case .format(let title, let format, _, _):
+            return title ?? L10n.Session.formatTime(format.title)
+        }
+    }
+
+    var completionMessage: String {
+        switch self {
+        case .quick:
+            return L10n.Session.practiceComplete
+        case .format(_, let format, _, _):
+            return L10n.Session.formatComplete(format.name)
+        }
+    }
+}
+
 @Reducer
 @MainActor
 struct SessionFeature {
     @ObservableState
     struct State: Equatable {
-        var title: String?
-        var format: FormatType
-        var opening: Opening
-        var duration: Int
+        var sessionType: SessionType
 
         // UI
         var currentSegmentIndex = 0
@@ -26,8 +75,12 @@ struct SessionFeature {
         var timerRunning = false
         var showPreshowCountdown = false
         var preshowCountdown = 5
-        var showTimerUI = false
         var showConfetti = false
+
+        // Convenience accessors
+        var duration: Int { sessionType.duration }
+        var segments: [FormatSegment] { sessionType.segments }
+        var title: String? { sessionType.title }
     }
 
     enum Action: Equatable {
@@ -48,14 +101,8 @@ struct SessionFeature {
             switch action {
             case .togglePlayPause:
                if state.timerRunning {
-                   state.showTimerUI = false
-
-                   return .run { send in
-                       await send(.pause)
-                   }
+                   return .send(.pause)
                } else {
-                   state.showTimerUI = true
-
                    if state.showPreshowCountdown {
                        return .send(.startPreshowCountdown(resume: true))
                    } else if state.remainingTime > 0 {
@@ -84,12 +131,12 @@ struct SessionFeature {
                 }
                 .cancellable(id: timerId, cancelInFlight: true)
             case .startSegmentTimer(let resume):
-                guard state.currentSegmentIndex < state.format.segments.count else { return .none }
+                guard state.currentSegmentIndex < state.segments.count else { return .none }
 
                 state.timerRunning = true
 
                 if !resume && state.remainingTime == 0 {
-                    state.remainingTime = state.format.segments[state.currentSegmentIndex].duration(from: state.duration)
+                    state.remainingTime = state.segments[state.currentSegmentIndex].duration(from: state.duration)
                     state.elapsedTime = 0
                 }
 
@@ -115,7 +162,7 @@ struct SessionFeature {
 
                         state.currentSegmentIndex = max(0, state.currentSegmentIndex)
                         state.elapsedTime = 0
-                        state.remainingTime = state.format.segments[state.currentSegmentIndex].duration(from: state.duration)
+                        state.remainingTime = state.segments[state.currentSegmentIndex].duration(from: state.duration)
                         return .send(.startSegmentTimer(resume: false))
                     }
                 }
@@ -131,15 +178,15 @@ struct SessionFeature {
                 // segment finished
                 state.timerRunning = false
                 state.currentSegmentIndex += 1
-                state.segmentElapsedTime = 0 
+                state.segmentElapsedTime = 0
                 state.remainingTime = 0
 
-                guard state.currentSegmentIndex < state.format.segments.count else {
+                guard state.currentSegmentIndex < state.segments.count else {
                     state.showConfetti = true
                     return .cancel(id: timerId)
                 }
 
-                state.remainingTime = state.format.segments[state.currentSegmentIndex].duration(from: state.duration)
+                state.remainingTime = state.segments[state.currentSegmentIndex].duration(from: state.duration)
 
                 return .send(.startSegmentTimer(resume: false))
             }
@@ -153,7 +200,7 @@ extension SessionFeature.State {
     }
 
     var segmentBreakdownText: String {
-        format.segments
+        segments
             .map { segment in
                 let seconds = Int(segment.duration(from: duration))
                 let minutes = seconds / 60

@@ -9,15 +9,22 @@ import Foundation
 import Dependencies
 
 struct RandomSuggestionService {
-    var fetchCategories: () async -> [SuggestionCategory]
+    var fetchCategories: () async throws -> [SuggestionCategory]
     var getRandomSuggestions: (SuggestionCategory, Int, Set<String>) -> [String]  // category, count, exclusions
 }
 
 extension RandomSuggestionService: DependencyKey {
     static var liveValue: RandomSuggestionService {
         Self {
-            let response = await RemoteConfigService.load(SuggestionsRequest())
-            return response?.categories ?? []
+            async let dataTask = RemoteConfigService.load(SuggestionsDataRequest())
+            async let translationsTask = RemoteConfigService.load(SuggestionsTranslationRequest())
+
+            let (dataResponse, translations) = try await (dataTask, translationsTask)
+
+            return dataResponse.categories.compactMap { categoryData in
+                guard let translation = translations[categoryData.id] else { return nil }
+                return SuggestionCategory.merge(data: categoryData, translation: translation)
+            }
         } getRandomSuggestions: { category, count, exclusions in
             let available = category.suggestions.filter { !exclusions.contains($0) }
             guard !available.isEmpty else { return [] }
@@ -26,7 +33,10 @@ extension RandomSuggestionService: DependencyKey {
             return Array(shuffled.prefix(min(count, shuffled.count)))
         }
     }
+}
 
+#if DEBUG
+extension RandomSuggestionService {
     static var testValue: RandomSuggestionService {
         Self {
             SuggestionCategory.mockCategories
@@ -43,6 +53,7 @@ extension RandomSuggestionService: DependencyKey {
         }
     }
 }
+#endif
 
 extension DependencyValues {
     var randomSuggestionService: RandomSuggestionService {

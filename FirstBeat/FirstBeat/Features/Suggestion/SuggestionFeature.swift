@@ -55,8 +55,11 @@ struct SuggestionFeature {
                     state.conversations.append(conversation)
                 }
 
-                return .run { send in
-                    for try await content in await suggestionService.fetchSuggestions(input) {
+                return .run { [usedSuggestionsService, suggestionService] send in
+                    // Load all used suggestions (AI + all categories)
+                    let usedAI = await usedSuggestionsService.getAIUsed()
+
+                    for try await content in await suggestionService.fetchSuggestions(input, usedAI) {
                         await send(.conversationReceived(id: conversation.id, content: content))
                     }
                 }

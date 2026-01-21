@@ -6,6 +6,7 @@
 //
 
 import ComposableArchitecture
+import Foundation
 
 @Reducer
 struct RandomSuggestionFeature {
@@ -17,11 +18,18 @@ struct RandomSuggestionFeature {
         var selectedSuggestion: String? = nil
         var usedSuggestions: Set<String> = []
         var isLoadingCategories: Bool = true
+        var errorMessage: String?
+
+        var hasError: Bool {
+            errorMessage != nil
+        }
     }
 
     enum Action: Equatable {
         case onAppear
         case categoriesLoaded([SuggestionCategory])
+        case loadFailed(String)
+        case retryTapped
         case categorySelected(SuggestionCategory)
         case usedSuggestionsLoaded(Set<String>)
         case refreshSuggestions
@@ -40,15 +48,29 @@ struct RandomSuggestionFeature {
             case .onAppear:
                 guard state.categories.isEmpty else { return .none }
                 state.isLoadingCategories = true
+                state.errorMessage = nil
                 return .run { send in
-                    let categories = await randomSuggestionService.fetchCategories()
-                    await send(.categoriesLoaded(categories))
+                    do {
+                        let categories = try await randomSuggestionService.fetchCategories()
+                        await send(.categoriesLoaded(categories))
+                    } catch {
+                        await send(.loadFailed(error.localizedDescription))
+                    }
                 }
 
             case .categoriesLoaded(let categories):
                 state.categories = categories
                 state.isLoadingCategories = false
                 return .none
+
+            case .loadFailed(let message):
+                state.isLoadingCategories = false
+                state.errorMessage = message
+                return .none
+
+            case .retryTapped:
+                state.categories = []
+                return .send(.onAppear)
 
             case .categorySelected(let category):
                 state.selectedCategory = category

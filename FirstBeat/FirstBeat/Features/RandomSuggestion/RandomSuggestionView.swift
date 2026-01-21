@@ -18,6 +18,11 @@ struct RandomSuggestionView: View {
                     ProgressView()
                         .frame(maxWidth: .infinity)
                         .padding(.top, 100)
+                } else if store.hasError {
+                    ErrorView(message: store.errorMessage) {
+                        store.send(.retryTapped)
+                    }
+                    .padding(.top, 50)
                 } else {
                     makeCategoriesSection()
 

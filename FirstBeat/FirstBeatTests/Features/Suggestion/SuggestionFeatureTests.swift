@@ -39,11 +39,12 @@ struct SuggestionFeatureTests {
         ) {
             SuggestionFeature()
         } withDependencies: {
-            $0.suggestionService.fetchSuggestions = { _ in
+            $0.suggestionService.fetchSuggestions = { _, _ in
                 AsyncStream { continuation in
                     continuation.finish()
                 }
             }
+            $0.usedSuggestionsService.getAIUsed = { [] }
         }
 
         store.exhaustivity = .off(showSkippedAssertions: false)
