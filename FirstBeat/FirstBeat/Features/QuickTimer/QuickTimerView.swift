@@ -19,6 +19,16 @@ struct QuickTimerView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(spacing: 24) {
+                    // Show suggestion if present
+                    if let suggestion = store.suggestion {
+                        Text("\"\(suggestion)\"")
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 8)
+                    }
+
                     Text("How long are we playing?")
                         .font(.headline)
                         .frame(maxWidth: .infinity, alignment: .leading)

@@ -35,6 +35,7 @@ struct AppFeature {
             case practiceEntry(PracticeEntryFeature.State)
             case suggestion(SuggestionFeature.State)
             case randomSuggestion(RandomSuggestionFeature.State)
+            case suggestionChoice(SuggestionChoiceFeature.State)
             case quickTimer(QuickTimerFeature.State)
             case practiceSetup(SessionSetupFeature.State)
             case practiceSession(SessionFeature.State)
@@ -46,6 +47,7 @@ struct AppFeature {
             case practiceEntry(PracticeEntryFeature.Action)
             case suggestion(SuggestionFeature.Action)
             case randomSuggestion(RandomSuggestionFeature.Action)
+            case suggestionChoice(SuggestionChoiceFeature.Action)
             case quickTimer(QuickTimerFeature.Action)
             case practiceSetup(SessionSetupFeature.Action)
             case practiceSession(SessionFeature.Action)
@@ -64,6 +66,10 @@ struct AppFeature {
 
             Scope(state: \.randomSuggestion, action: \.randomSuggestion) {
                 RandomSuggestionFeature()
+            }
+
+            Scope(state: \.suggestionChoice, action: \.suggestionChoice) {
+                SuggestionChoiceFeature()
             }
 
             Scope(state: \.quickTimer, action: \.quickTimer) {
@@ -129,20 +135,30 @@ struct AppFeature {
                 return .none
 
             // MARK: Quick Timer → Practice Session
-            case .path(.element(id: _, action: .quickTimer(.delegate(.start(let duration))))):
+            case .path(.element(id: _, action: .quickTimer(.delegate(.start(let suggestion, let duration))))):
                 state.path.append(.practiceSession(SessionFeature.State(
-                    sessionType: .quick(duration: duration)
+                    sessionType: .quick(suggestion: suggestion, duration: duration)
                 )))
                 return .none
 
-            // MARK: AI Suggestion → Practice Setup (with suggestion)
+            // MARK: AI Suggestion → Suggestion Choice
             case .path(.element(id: _, action: .suggestion(.suggestionSelected(let suggestion)))):
+                state.path.append(.suggestionChoice(SuggestionChoiceFeature.State(suggestion: suggestion)))
+                return .none
+
+            // MARK: Random Suggestion → Suggestion Choice
+            case .path(.element(id: _, action: .randomSuggestion(.suggestionSelected(let suggestion)))):
+                state.path.append(.suggestionChoice(SuggestionChoiceFeature.State(suggestion: suggestion)))
+                return .none
+
+            // MARK: Suggestion Choice → Practice Setup (Choose Format)
+            case .path(.element(id: _, action: .suggestionChoice(.delegate(.chooseFormat(let suggestion))))):
                 state.path.append(.practiceSetup(SessionSetupFeature.State(suggestion: suggestion)))
                 return .none
 
-            // MARK: Random Suggestion → Practice Setup (with suggestion)
-            case .path(.element(id: _, action: .randomSuggestion(.suggestionSelected(let suggestion)))):
-                state.path.append(.practiceSetup(SessionSetupFeature.State(suggestion: suggestion)))
+            // MARK: Suggestion Choice → Quick Timer (Open Practice)
+            case .path(.element(id: _, action: .suggestionChoice(.delegate(.openPractice(let suggestion))))):
+                state.path.append(.quickTimer(QuickTimerFeature.State(suggestion: suggestion)))
                 return .none
 
             // MARK: Practice Setup → Practice Session

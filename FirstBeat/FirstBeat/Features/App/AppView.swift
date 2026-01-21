@@ -36,6 +36,10 @@ struct AppView: View {
                 if let store = store.scope(state: \.randomSuggestion, action: \.randomSuggestion) {
                     RandomSuggestionView(store: store)
                 }
+            case .suggestionChoice:
+                if let store = store.scope(state: \.suggestionChoice, action: \.suggestionChoice) {
+                    SuggestionChoiceView(store: store)
+                }
             case .quickTimer:
                 if let store = store.scope(state: \.quickTimer, action: \.quickTimer) {
                     QuickTimerView(store: store)

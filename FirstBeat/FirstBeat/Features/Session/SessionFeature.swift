@@ -11,12 +11,12 @@ import ComposableArchitecture
 // MARK: - Session Type
 
 enum SessionType: Equatable {
-    case quick(duration: Int)
+    case quick(suggestion: String?, duration: Int)
     case format(title: String?, format: FormatType, opening: Opening, duration: Int)
 
     var duration: Int {
         switch self {
-        case .quick(let duration):
+        case .quick(_, let duration):
             return duration
         case .format(_, _, _, let duration):
             return duration
@@ -34,8 +34,8 @@ enum SessionType: Equatable {
 
     var title: String? {
         switch self {
-        case .quick:
-            return nil
+        case .quick(let suggestion, _):
+            return suggestion
         case .format(let title, _, _, _):
             return title
         }

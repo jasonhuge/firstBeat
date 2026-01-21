@@ -117,6 +117,12 @@ enum L10n {
         static let shuffle = String(localized: "Shuffle")
     }
 
+    // MARK: - Suggestion Choice
+
+    enum SuggestionChoice {
+        static let title = String(localized: "Your Suggestion")
+    }
+
     // MARK: - Buttons
 
     enum Button {

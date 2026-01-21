@@ -38,10 +38,12 @@ struct OptionCard: View {
                     Text(model.title)
                         .font(.headline)
                         .foregroundColor(Color(.label))
+                        .multilineTextAlignment(.leading)
 
                     Text(model.subtitle)
                         .font(.subheadline)
                         .foregroundColor(Color(.secondaryLabel))
+                        .multilineTextAlignment(.leading)
                 }
 
                 Spacer()
