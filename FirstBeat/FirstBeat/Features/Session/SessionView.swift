@@ -59,6 +59,12 @@ struct SessionView: View {
             .onChange(of: store.timerRunning) { _, newValue in
                 UIApplication.shared.isIdleTimerDisabled = newValue
             }
+            .onChange(of: store.showConfetti) { _, newValue in
+                if newValue {
+                    showConfetti = true
+                    playCompletionChime()
+                }
+            }
             .onDisappear {
                 UIApplication.shared.isIdleTimerDisabled = false
             }
@@ -268,6 +274,11 @@ extension SessionView {
 
     private func playSegmentChime() {
         AudioServicesPlaySystemSound(1151) // Chime / short bell
+    }
+
+    private func playCompletionChime() {
+        HapticFeedback.success()
+        AudioServicesPlaySystemSound(1025) // Triple ascending bell
     }
 }
 

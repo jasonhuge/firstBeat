@@ -30,6 +30,7 @@ struct RandomSuggestionFeature {
         case categoriesLoaded([SuggestionCategory])
         case loadFailed(String)
         case retryTapped
+        case randomSelected
         case categorySelected(SuggestionCategory)
         case usedSuggestionsLoaded(Set<String>)
         case refreshSuggestions
@@ -41,6 +42,20 @@ struct RandomSuggestionFeature {
 
     @Dependency(\.usedSuggestionsService)
     var usedSuggestionsService
+
+    private func loadUsedSuggestions(for category: SuggestionCategory) -> Effect<Action> {
+        .run { send in
+            let shouldReset = await usedSuggestionsService.shouldReset(
+                category.id,
+                category.suggestions.count
+            )
+            if shouldReset {
+                await usedSuggestionsService.reset(category.id)
+            }
+            let used = await usedSuggestionsService.getUsed(category.id)
+            await send(.usedSuggestionsLoaded(used))
+        }
+    }
 
     var body: some Reducer<State, Action> {
         Reduce { state, action in
@@ -72,22 +87,15 @@ struct RandomSuggestionFeature {
                 state.categories = []
                 return .send(.onAppear)
 
+            case .randomSelected:
+                let allSuggestions = state.categories.flatMap { $0.suggestions }
+                guard let suggestion = allSuggestions.randomElement() else { return .none }
+                return .send(.suggestionSelected(suggestion))
+
             case .categorySelected(let category):
                 state.selectedCategory = category
                 state.selectedSuggestion = nil
-                return .run { send in
-                    // Check if we need to reset first
-                    let shouldReset = await usedSuggestionsService.shouldReset(
-                        category.id,
-                        category.suggestions.count
-                    )
-                    if shouldReset {
-                        await usedSuggestionsService.reset(category.id)
-                    }
-
-                    let used = await usedSuggestionsService.getUsed(category.id)
-                    await send(.usedSuggestionsLoaded(used))
-                }
+                return loadUsedSuggestions(for: category)
 
             case .usedSuggestionsLoaded(let used):
                 state.usedSuggestions = used

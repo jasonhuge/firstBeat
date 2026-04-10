@@ -44,19 +44,61 @@ struct RandomSuggestionView: View {
 
     @ViewBuilder
     private func makeCategoriesSection() -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Category")
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 20) {
+            makeSurpriseMeButton()
                 .padding(.horizontal, 16)
 
-            FlowLayout(spacing: 12) {
-                ForEach(store.categories) { category in
-                    makeCategoryPill(category)
-                }
+            HStack {
+                VStack { Divider() }
+                Text("OR")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.secondary)
+                VStack { Divider() }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
+
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Choose a category")
+                    .font(.headline)
+                    .padding(.horizontal, 16)
+
+                FlowLayout(spacing: 12) {
+                    ForEach(store.categories) { category in
+                        makeCategoryPill(category)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16)
+            }
         }
+    }
+
+    @ViewBuilder
+    private func makeSurpriseMeButton() -> some View {
+        Button {
+            store.send(.randomSelected)
+            HapticFeedback.medium()
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "sparkles")
+                Text("Surprise Me")
+                    .fontWeight(.semibold)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14))
+                    .opacity(0.4)
+            }
+            .padding(.vertical, 14)
+            .padding(.horizontal, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(.secondarySystemBackground))
+                    .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
+            )
+            .foregroundColor(.primary)
+        }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder

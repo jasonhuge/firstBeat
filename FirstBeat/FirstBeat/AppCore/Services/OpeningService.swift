@@ -27,6 +27,7 @@ extension OpeningService: DependencyKey {
         }
     }
 
+    #if DEBUG
     static var testValue: OpeningService {
         Self {
             [Opening.mock]
@@ -38,6 +39,7 @@ extension OpeningService: DependencyKey {
             [Opening.mock]
         }
     }
+    #endif
 }
 
 extension DependencyValues {

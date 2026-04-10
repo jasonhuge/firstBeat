@@ -29,6 +29,7 @@ extension FormatService: DependencyKey {
         }
     }
 
+    #if DEBUG
     static var testValue: FormatService {
         Self {
             [FormatType.mock]
@@ -40,6 +41,7 @@ extension FormatService: DependencyKey {
             [FormatType.mock]
         }
     }
+    #endif
 }
 
 // MARK: - DependencyValues
