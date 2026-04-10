@@ -115,6 +115,9 @@ enum L10n {
         static let category = String(localized: "Category")
         static let pickASuggestion = String(localized: "Pick a Suggestion")
         static let shuffle = String(localized: "Shuffle")
+        static let surpriseMe = String(localized: "Surprise Me")
+        static let or = String(localized: "OR")
+        static let chooseACategory = String(localized: "Choose a category")
     }
 
     // MARK: - Suggestion Choice

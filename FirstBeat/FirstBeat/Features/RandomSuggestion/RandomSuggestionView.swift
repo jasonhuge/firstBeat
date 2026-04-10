@@ -50,7 +50,7 @@ struct RandomSuggestionView: View {
 
             HStack {
                 VStack { Divider() }
-                Text("OR")
+                Text(L10n.RandomSuggestions.or)
                     .font(.caption)
                     .fontWeight(.semibold)
                     .foregroundColor(.secondary)
@@ -59,7 +59,7 @@ struct RandomSuggestionView: View {
             .padding(.horizontal, 16)
 
             VStack(alignment: .leading, spacing: 12) {
-                Text("Choose a category")
+                Text(L10n.RandomSuggestions.chooseACategory)
                     .font(.headline)
                     .padding(.horizontal, 16)
 
@@ -82,7 +82,7 @@ struct RandomSuggestionView: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "sparkles")
-                Text("Surprise Me")
+                Text(L10n.RandomSuggestions.surpriseMe)
                     .fontWeight(.semibold)
                 Spacer()
                 Image(systemName: "chevron.right")
